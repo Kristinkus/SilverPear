@@ -5,64 +5,72 @@ import com.example.silverpear.product.productDto.UserDto;
 import com.example.silverpear.product.productDto.UserMapper;
 import com.example.silverpear.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.validation.Valid;
 import java.util.List;
-@RestController
-@RequestMapping("/shop")
-@RequiredArgsConstructor
 
+@RestController
+@RequestMapping("/api/v1/products")
+@RequiredArgsConstructor
 public class ProductController {
 
     private final ProductService productService;
     private final UserMapper userMapper;
 
-    @RequestMapping("/products")
-    public List<String> getAllProducts(){
-        return List.of("Парфюм", "Косметика");
-    }
-
-    @RequestMapping(value = "/products/{id}")
-    public String getProduct(@PathVariable(value = "id")  int id){
-        return "";
-    }
-
-    @GetMapping("/details")
-    public String getDetails(@RequestParam(value = "param1", required = true, defaultValue = "") String param1,
-                             @RequestParam(value = "param2", defaultValue = "") String param2){
-
-        return param1+param2;
-    }
-
-    @GetMapping("/api/products")
-    public List<UserDto> getAllProductsApi() {
+    @GetMapping
+    public ResponseEntity<List<UserDto>> getAllProducts() {
         List<Product> products = productService.getAllProducts();
-        return userMapper.toDtoList(products);
+        return ResponseEntity.ok(userMapper.toDtoList(products));
     }
 
-    @GetMapping("/api/products/{id}")
-    public UserDto getProductById(@PathVariable int id) {
-        Product product = productService.getProductById(id);
-        return userMapper.toDto(product);
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDto> getProductById(@PathVariable int id) {
+        try {
+            Product product = productService.getProductById(id);
+            return ResponseEntity.ok(userMapper.toDto(product));
+        } catch (RuntimeException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with id: " + id);
+        }
     }
 
-    @PostMapping("/api/products")
-    public UserDto createProduct(@RequestBody UserDto productDto) {
+    @PostMapping
+    public ResponseEntity<UserDto> createProduct(@Valid @RequestBody UserDto productDto) {
         Product product = userMapper.toEntity(productDto);
         Product savedProduct = productService.createProduct(product);
-        return userMapper.toDto(savedProduct);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userMapper.toDto(savedProduct));
     }
 
-    @GetMapping("/api/products/search")
-    public List<UserDto> searchProducts(
+    @PutMapping("/{id}")
+    public ResponseEntity<UserDto> updateProduct(
+            @PathVariable int id,
+            @Valid @RequestBody UserDto productDto) {
+        Product product = userMapper.toEntity(productDto);
+        Product updatedProduct = productService.updateProduct(id, product);
+        return ResponseEntity.ok(userMapper.toDto(updatedProduct));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable int id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<UserDto>> searchProducts(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String brand,
             @RequestParam(required = false) String category) {
 
         List<Product> products = productService.searchProducts(name, brand, category);
-        return userMapper.toDtoList(products);
+        return ResponseEntity.ok(userMapper.toDtoList(products));
     }
 
-
-
+    @GetMapping("/simple")
+    public ResponseEntity<List<String>> getSimpleProductList() {
+        return ResponseEntity.ok(List.of("Парфюм", "Косметика"));
+    }
 }
