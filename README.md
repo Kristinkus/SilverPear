@@ -58,3 +58,6 @@
 *   **DTO (`UserDto`):** Объект для передачи данных между сервером и клиентом. Скрывает лишние поля (например, `purchasePrice`) и добавляет вычисляемые (`salePrice`).
 *   **Маппер (`UserMapper`):** Компонент для преобразования между сущностью `Product` и DTO `UserDto`.
 
+## Ссылка на проверку SonarCloud
+
+https://sonarcloud.io/project/overview?id=Kristinkus_SilverPear
