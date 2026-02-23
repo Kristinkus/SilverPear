@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 @Repository
 public class ProductRepository {
 
-    // Временное хранилище в памяти (пока без БД)
+
     private final List<Product> products = new ArrayList<>();
     private int nextId = 1;
 
