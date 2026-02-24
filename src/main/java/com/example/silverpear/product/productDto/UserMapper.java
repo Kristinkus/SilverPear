@@ -24,7 +24,6 @@ public class UserMapper {
         Product product = new Product();
         product.setId(userDto.id);
         product.setName(userDto.name);
-        product.setPrice(userDto.price);
         product.setBrand(userDto.brand);
         product.setCategory(userDto.category);
         return product;
@@ -58,7 +57,6 @@ public class UserMapper {
 
         product.setId(userDto.id);
         product.setName(userDto.name);
-        product.setPrice(userDto.price);
         product.setBrand(userDto.brand);
         product.setCategory(userDto.category);
     }

@@ -9,7 +9,6 @@ import lombok.Data;
 public class UserDto {
     int id;
     String name;
-    double price;
     String brand;
     String category;
     double salePrice;
@@ -17,10 +16,8 @@ public class UserDto {
     public UserDto(Product product) {
         this.id = product.getId();
         this.name = product.getName();
-        this.price = product.getPrice();
         this.brand = product.getBrand();
         this.category = product.getCategory();
-        this.salePrice = product.overprice();
+        this.salePrice = product.getSalePrice();
     }
-
 }
