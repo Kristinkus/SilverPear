@@ -2,23 +2,20 @@ package com.example.silverpear.product.productdto;
 
 import com.example.silverpear.product.entity.Product;
 import java.util.List;
+import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Optional;
+
 import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
 
     public UserDto toDto(Product product) {
-        if (product == null) {
-            return null;
-        }
         return new UserDto(product);
     }
 
     public Product toEntity(UserDto userDto) {
-        if (userDto == null) {
-            return null;
-        }
 
         Product product = new Product();
         product.setId(userDto.id);
