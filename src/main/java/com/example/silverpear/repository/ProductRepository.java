@@ -45,31 +45,23 @@ public class ProductRepository {
         List<Product> result = new ArrayList<>();
 
         for (Product product : products) {
-            boolean match = true;
-
-            if (name != null && !name.isEmpty()) {
-                if (!product.getName().toLowerCase().contains(name.toLowerCase())) {
-                    continue;
-                }
-            }
-
-            if (match && brand != null && !brand.isEmpty()) {
-                if (!product.getBrand().toLowerCase().contains(brand.toLowerCase())) {
-                    continue;
-                }
-            }
-
-            if (match && category != null && !category.isEmpty()) {
-                if (!product.getCategory().toLowerCase().contains(category.toLowerCase())) {
-                    continue;
-                }
-            }
-
-            if (match) {
+            if (allMatch(product, name, brand, category)) {
                 result.add(product);
             }
         }
 
         return result;
+    }
+
+    private boolean allMatch(Product product, String name, String brand, String category) {
+        return Optional.ofNullable(name).filter(n -> !n.isEmpty())
+                .map(n -> product.getName().toLowerCase().contains(n.toLowerCase()))
+                .orElse(true) &&
+                Optional.ofNullable(brand).filter(b -> !b.isEmpty())
+                        .map(b -> product.getBrand().toLowerCase().contains(b.toLowerCase()))
+                        .orElse(true) &&
+                Optional.ofNullable(category).filter(c -> !c.isEmpty())
+                        .map(c -> product.getCategory().toLowerCase().contains(c.toLowerCase()))
+                        .orElse(true);
     }
 }
