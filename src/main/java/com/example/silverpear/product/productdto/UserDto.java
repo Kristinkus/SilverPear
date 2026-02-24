@@ -1,4 +1,4 @@
-package com.example.silverpear.product.productDto;
+package com.example.silverpear.product.productdto;
 
 import com.example.silverpear.product.entity.Product;
 import lombok.NoArgsConstructor;

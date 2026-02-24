@@ -1,8 +1,8 @@
 package com.example.silverpear.controller;
 
 import com.example.silverpear.product.entity.Product;
-import com.example.silverpear.product.productDto.UserDto;
-import com.example.silverpear.product.productDto.UserMapper;
+import com.example.silverpear.product.productdto.UserDto;
+import com.example.silverpear.product.productdto.UserMapper;
 import com.example.silverpear.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
