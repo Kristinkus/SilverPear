@@ -26,18 +26,13 @@ public class UserMapper {
     }
 
     public List<UserDto> toDtoList(List<Product> products) {
-        if (products == null) {
-            return null;
-        }
+
         List<UserDto> dtos = new ArrayList<>();
         products.forEach(product -> dtos.add(new UserDto(product)));  // лямбда с forEach
         return dtos;
     }
 
     public List<Product> toEntityList(List<UserDto> userDtos) {
-        if (userDtos == null) {
-            return null;
-        }
 
         List<Product> products = new ArrayList<>();
         for (UserDto dto : userDtos) {  // обычный цикл for-each
