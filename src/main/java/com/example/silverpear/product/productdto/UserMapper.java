@@ -2,10 +2,7 @@ package com.example.silverpear.product.productdto;
 
 import com.example.silverpear.product.entity.Product;
 import java.util.List;
-import java.util.Collections;
 import java.util.ArrayList;
-import java.util.Optional;
-
 import org.springframework.stereotype.Component;
 
 @Component
