@@ -1,13 +1,12 @@
 package com.example.silverpear.controller;
 
 import com.example.silverpear.product.entity.Order;
+import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -20,10 +19,13 @@ public class OrderController {
     @PostMapping("/create-with-items")
     public ResponseEntity<?> createOrderWithItems(
             @RequestParam Long userId,
-            @RequestBody List<Long> productIds,
-            @RequestBody List<Integer> quantities) {
+            @RequestBody OrderRequest request) {
         try {
-            Order order = orderService.createOrderWithItems(userId, productIds, quantities);
+            Order order = orderService.createOrderWithItems(
+                    userId,
+                    request.getProductIds(),
+                    request.getQuantities()
+            );
             return ResponseEntity.ok(order);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -49,10 +51,13 @@ public class OrderController {
     @PostMapping("/create-without-transaction")
     public ResponseEntity<?> createOrderWithoutTransaction(
             @RequestParam Long userId,
-            @RequestBody List<Long> productIds,
-            @RequestBody List<Integer> quantities) {
+            @RequestBody OrderRequest request) {
         try {
-            Order order = orderService.createOrderWithoutTransaction(userId, productIds, quantities);
+            Order order = orderService.createOrderWithoutTransaction(
+                    userId,
+                    request.getProductIds(),
+                    request.getQuantities()
+            );
             return ResponseEntity.ok(order);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
