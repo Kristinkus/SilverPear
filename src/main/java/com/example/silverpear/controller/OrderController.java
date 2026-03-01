@@ -23,7 +23,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/create-with-items")
-    public ResponseEntity<?> createOrderWithItems(
+    public ResponseEntity<Object> createOrderWithItems(
             @RequestParam Long userId,
             @RequestBody OrderRequest request) {
         try {
@@ -55,7 +55,7 @@ public class OrderController {
 
     // Эндпоинт для демонстрации частичного сохранения без @Transactional
     @PostMapping("/create-without-transaction")
-    public ResponseEntity<?> createOrderWithoutTransaction(
+    public ResponseEntity<Object> createOrderWithoutTransaction(
             @RequestParam Long userId,
             @RequestBody OrderRequest request) {
         try {

@@ -29,7 +29,7 @@ public class OrderService {
         this.productRepository = productRepository;
     }
 
-    @Transactional  // БЕЗ ЭТОЙ АННОТАЦИИ ПРОИЗОЙДЕТ ЧАСТИЧНОЕ СОХРАНЕНИЕ
+    @Transactional
     public Order createOrderWithItems(Long userId, List<Long> productIds, List<Integer> quantities) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
