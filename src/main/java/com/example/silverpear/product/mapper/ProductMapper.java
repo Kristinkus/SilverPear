@@ -3,7 +3,6 @@ package com.example.silverpear.product.mapper;
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.product.productdto.ProductDto;
 
-//import java.sql.Array;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -26,6 +25,9 @@ public class ProductMapper {
     }
 
     protected ProductDto createDto(Product product) {
+        if (product == null) {
+            return null;
+        }
         return new ProductDto();
     }
 

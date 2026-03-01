@@ -14,7 +14,6 @@ public class UserDto {
     double salePrice;
 
     public UserDto(Product product) {
-        //this.id = product.getId();
         this.name = product.getName();
         this.brand = product.getBrand();
         this.category = product.getCategory();

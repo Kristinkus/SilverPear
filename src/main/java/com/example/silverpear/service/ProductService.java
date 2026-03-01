@@ -127,6 +127,8 @@ public class ProductService {
                 case "volume":
                     existingProduct.setVolume(((Number) value).doubleValue());
                     break;
+                default:
+                    break;
             }
         });
 

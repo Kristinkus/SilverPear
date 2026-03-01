@@ -70,8 +70,6 @@ public class UserController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "User not found with id: " + id));
 
-        // Теперь это не создает дополнительный запрос (данные уже загружены)
-        System.out.println("Количество заказов пользователя: " + user.getOrders().size());
 
         return ResponseEntity.ok(user);
     }
