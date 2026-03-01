@@ -2,11 +2,8 @@ package com.example.silverpear.service;
 
 import com.example.silverpear.enums.Gender;
 import com.example.silverpear.product.entity.Product;
-//import com.example.silverpear.product.productdto.ProductDto;
 import com.example.silverpear.repository.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;  // ЭТОТ
-import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -14,12 +11,15 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
+
 public class ProductService {
 
-    @Autowired
     protected final ProductRepository productRepository;
 
+    // Конструктор для внедрения зависимости
+    public ProductService(ProductRepository productRepository) {
+        this.productRepository = productRepository;
+    }
     public List<Product> findAll() {
         return productRepository.findAll();
     }

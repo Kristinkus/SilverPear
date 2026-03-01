@@ -4,20 +4,19 @@ package com.example.silverpear.service;
 import com.example.silverpear.product.entity.Cosmetics;
 import com.example.silverpear.repository.CosmeticsRepository;
 import com.example.silverpear.repository.ProductRepository;
-//import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+
 public class CosmeticsService extends ProductService {
 
-    @Autowired
-    private CosmeticsRepository cosmeticsRepository;
+    private final CosmeticsRepository cosmeticsRepository;
 
-    public CosmeticsService(ProductRepository productRepository) {
+    public CosmeticsService(ProductRepository productRepository, CosmeticsRepository cosmeticsRepository) {
         super(productRepository);
+        this.cosmeticsRepository = cosmeticsRepository;  // параметр присваивается полю
     }
 
     public Cosmetics create(Cosmetics cosmetics) {

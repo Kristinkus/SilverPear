@@ -5,7 +5,6 @@ import com.example.silverpear.product.entity.Perfume;
 
 import com.example.silverpear.repository.PerfumeRepository;
 import com.example.silverpear.repository.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,11 +12,11 @@ import java.util.List;
 @Service
 public class PerfumeService extends ProductService {
 
-    @Autowired
-    private PerfumeRepository perfumeRepository;
+    private final PerfumeRepository perfumeRepository;
 
-    public PerfumeService(ProductRepository productRepository) {
+    public PerfumeService(ProductRepository productRepository, PerfumeRepository perfumeRepository) {
         super(productRepository);
+        this.perfumeRepository = perfumeRepository;
     }
 
     public Perfume create(Perfume perfume) {

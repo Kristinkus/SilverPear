@@ -7,7 +7,6 @@ import com.example.silverpear.product.entity.User;
 import com.example.silverpear.repository.OrderRepository;
 import com.example.silverpear.repository.ProductRepository;
 import com.example.silverpear.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,16 +17,18 @@ import java.util.UUID;
 @Service
 public class OrderService {
 
-    @Autowired
-    private OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    public OrderService(OrderRepository orderRepository,
+                        UserRepository userRepository,
+                        ProductRepository productRepository) {
+        this.orderRepository = orderRepository;
+        this.userRepository = userRepository;
+        this.productRepository = productRepository;
+    }
 
-    @Autowired
-    private ProductRepository productRepository;
-
-    // Демонстрация сохранения нескольких связанных сущностей
     @Transactional  // БЕЗ ЭТОЙ АННОТАЦИИ ПРОИЗОЙДЕТ ЧАСТИЧНОЕ СОХРАНЕНИЕ
     public Order createOrderWithItems(Long userId, List<Long> productIds, List<Integer> quantities) {
         User user = userRepository.findById(userId)
@@ -71,7 +72,6 @@ public class OrderService {
         return orderRepository.save(savedOrder);
     }
 
-    // Демонстрация проблемы N+1
     public void demonstrateNPlusOneProblem(Long userId) {
         User user = userRepository.findById(userId).orElseThrow();
 
