@@ -63,11 +63,13 @@ public class UserController {
     }
 
     @GetMapping("/{id}/orders")
-    public ResponseEntity<?> getUserWithOrders(@PathVariable Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id));
+    public ResponseEntity<User> getUserWithOrders(@PathVariable Long id) {
+        // Используем метод с EntityGraph для загрузки заказов
+        User user = userRepository.findByIdWithOrders(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "User not found with id: " + id));
 
-        // Принудительная загрузка заказов (для демонстрации LAZY)
+        // Теперь это не создает дополнительный запрос (данные уже загружены)
         System.out.println("Количество заказов пользователя: " + user.getOrders().size());
 
         return ResponseEntity.ok(user);
