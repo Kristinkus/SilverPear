@@ -5,7 +5,7 @@ import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.repository.ProductRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
-
+import com.example.silverpear.enums.ErrorMessages;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +34,7 @@ public class ProductService {
 
     public Product findById(Long id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException(ErrorMessages.PRODUCT_NOT_FOUND.withId(id)));
     }
 
     public List<Product> findByName(String name) {

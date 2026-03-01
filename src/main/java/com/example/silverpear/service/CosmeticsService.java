@@ -5,7 +5,7 @@ import com.example.silverpear.product.entity.Cosmetics;
 import com.example.silverpear.repository.CosmeticsRepository;
 import com.example.silverpear.repository.ProductRepository;
 import org.springframework.stereotype.Service;
-
+import com.example.silverpear.enums.ErrorMessages;
 import java.util.List;
 
 @Service
@@ -35,8 +35,7 @@ public class CosmeticsService extends ProductService {
 
     public Cosmetics updateCosmetics(Long id, Cosmetics cosmetics) {
         Cosmetics existingCosmetics = cosmeticsRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cosmetics not found with id: " + id));
-
+                .orElseThrow(() -> new RuntimeException(ErrorMessages.COSMETICS_NOT_FOUND.withId(id)));
         super.updateBaseFields(existingCosmetics, cosmetics);
 
         existingCosmetics.setPrescription(cosmetics.getPrescription());
