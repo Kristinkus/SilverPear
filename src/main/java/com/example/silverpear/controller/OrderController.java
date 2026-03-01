@@ -3,19 +3,25 @@ package com.example.silverpear.controller;
 import com.example.silverpear.product.entity.Order;
 import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.service.OrderService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/orders")
+@RequiredArgsConstructor
 public class OrderController {
 
-    @Autowired
-    private OrderService orderService;
+    private final OrderService orderService;
 
-    // Эндпоинт для демонстрации создания заказа с товарами (с транзакцией)
     @PostMapping("/create-with-items")
     public ResponseEntity<?> createOrderWithItems(
             @RequestParam Long userId,

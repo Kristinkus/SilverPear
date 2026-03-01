@@ -5,7 +5,7 @@ import com.example.silverpear.product.mapper.CosmeticsMapper;
 import com.example.silverpear.product.productdto.CosmeticsDto;
 
 import com.example.silverpear.service.CosmeticsService;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,10 +24,13 @@ import java.util.List;
 @RequestMapping("/api/cosmetics")
 public class CosmeticsController {
 
-    @Autowired
-    private CosmeticsService cosmeticsService;
-    @Autowired
-    private CosmeticsMapper cosmeticsMapper;
+    private final CosmeticsService cosmeticsService;
+    private final CosmeticsMapper cosmeticsMapper;
+
+    public CosmeticsController(CosmeticsService cosmeticsService, CosmeticsMapper cosmeticsMapper) {
+        this.cosmeticsService = cosmeticsService;
+        this.cosmeticsMapper = cosmeticsMapper;
+    }
 
     @GetMapping
     public ResponseEntity<List<Cosmetics>> getAllCosmetics() {

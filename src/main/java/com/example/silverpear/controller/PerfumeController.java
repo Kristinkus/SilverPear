@@ -4,6 +4,7 @@ import com.example.silverpear.product.entity.Perfume;
 import com.example.silverpear.product.mapper.PerfumeMapper;
 import com.example.silverpear.product.productdto.PerfumeDto;
 import com.example.silverpear.service.PerfumeService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,13 +22,12 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/perfumes")
+@RequiredArgsConstructor
+
 public class PerfumeController {
 
-    @Autowired
-    private PerfumeService perfumeService;
-
-    @Autowired
-    private PerfumeMapper perfumeMapper;
+    private final PerfumeService perfumeService;
+    private final PerfumeMapper perfumeMapper;
 
     @GetMapping
     public ResponseEntity<List<Perfume>> getAllPerfumes() {
