@@ -1,0 +1,62 @@
+package com.example.silverpear.controller;
+
+import com.example.silverpear.product.entity.Order;
+import com.example.silverpear.service.OrderService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
+
+    @Autowired
+    private OrderService orderService;
+
+    // Эндпоинт для демонстрации создания заказа с товарами (с транзакцией)
+    @PostMapping("/create-with-items")
+    public ResponseEntity<?> createOrderWithItems(
+            @RequestParam Long userId,
+            @RequestBody List<Long> productIds,
+            @RequestBody List<Integer> quantities) {
+        try {
+            Order order = orderService.createOrderWithItems(userId, productIds, quantities);
+            return ResponseEntity.ok(order);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ошибка при создании заказа: " + e.getMessage());
+        }
+    }
+
+    // Эндпоинт для демонстрации проблемы N+1
+    @GetMapping("/demonstrate-nplus1/{userId}")
+    public ResponseEntity<String> demonstrateNPlusOne(@PathVariable Long userId) {
+        orderService.demonstrateNPlusOneProblem(userId);
+        return ResponseEntity.ok("Проверьте консоль для демонстрации проблемы N+1");
+    }
+
+    // Эндпоинт для демонстрации решения с @EntityGraph
+    @GetMapping("/demonstrate-solution/{userId}")
+    public ResponseEntity<String> demonstrateSolution(@PathVariable Long userId) {
+        orderService.demonstrateSolutionWithEntityGraph(userId);
+        return ResponseEntity.ok("Проверьте консоль для демонстрации решения с @EntityGraph");
+    }
+
+    // Эндпоинт для демонстрации частичного сохранения без @Transactional
+    @PostMapping("/create-without-transaction")
+    public ResponseEntity<?> createOrderWithoutTransaction(
+            @RequestParam Long userId,
+            @RequestBody List<Long> productIds,
+            @RequestBody List<Integer> quantities) {
+        try {
+            Order order = orderService.createOrderWithoutTransaction(userId, productIds, quantities);
+            return ResponseEntity.ok(order);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Произошла ошибка, но заказ мог быть частично сохранен: " + e.getMessage());
+        }
+    }
+}

@@ -1,31 +1,140 @@
 package com.example.silverpear.service;
 
+import com.example.silverpear.enums.Gender;
 import com.example.silverpear.product.entity.Product;
+//import com.example.silverpear.product.productdto.ProductDto;
 import com.example.silverpear.repository.ProductRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;  // ЭТОТ
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class ProductService {
 
-    private final ProductRepository productRepository;
+    @Autowired
+    protected final ProductRepository productRepository;
 
-    public List<Product> getAllProducts() {
+    public List<Product> findAll() {
         return productRepository.findAll();
     }
 
-    public Product getProductById(int id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Продукт с id " + id + " не найден"));
+    public List<Product> findByBrand(String brand) {
+        return productRepository.findByBrand(brand);
     }
 
-    public Product createProduct(Product product) {
+    public List<Product> findByCategory(String category) {
+        return productRepository.findByCategory(category);
+    }
+
+    public Product findById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+    }
+
+    public List<Product> findByName(String name) {
+        return productRepository.findByName(name);
+    }
+
+    public Product create(Product product) {
         return productRepository.save(product);
     }
 
     public List<Product> searchProducts(String name, String brand, String category) {
-        return productRepository.searchProducts(name, brand, category);
+        List<Product> products = new ArrayList<>();
+        if (name != null) {
+            products.addAll(productRepository.findByName(name));
+        }
+        if (brand != null) {
+            products.addAll(productRepository.findByBrand(brand));
+        }
+        if (category != null) {
+            products.addAll(productRepository.findByCategory(category));
+        }
+        return products;
     }
+
+    public void deleteById(Long id) {
+        productRepository.deleteById(id);
+    }
+
+    public Product update(Long id, Product product) {
+        Product existingProduct = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+
+        updateBaseFields(existingProduct, product);
+
+        return productRepository.save(existingProduct);
+    }
+
+    protected void updateBaseFields(Product existing, Product source) {
+        existing.setName(source.getName());
+        existing.setBrand(source.getBrand());
+        existing.setDescription(source.getDescription());
+        existing.setCategory(source.getCategory());
+        existing.setPurchasePrice(source.getPurchasePrice());
+        existing.setSalePrice(source.getSalePrice());
+        existing.setOldSalePrice(source.getOldSalePrice());
+        existing.setInStock(source.isInStock());
+        existing.setProductType(source.getProductType());
+        existing.setGender(source.getGender());
+        existing.setVolume(source.getVolume());
+    }
+
+    @Transactional
+    public Product patchUpdate(Long id, Map<String, Object> updates) {
+        Product existingProduct = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+
+        updates.forEach((key, value) -> {
+            if (value == null) {
+                return; // пропускаем null значения
+            }
+
+            switch (key) {
+                case "name":
+                    existingProduct.setName((String) value);
+                    break;
+                case "brand":
+                    existingProduct.setBrand((String) value);
+                    break;
+                case "description":
+                    existingProduct.setDescription((String) value);
+                    break;
+                case "category":
+                    existingProduct.setCategory((String) value);
+                    break;
+                case "salePrice":
+                    existingProduct.setSalePrice(((Number) value).doubleValue());
+                    break;
+                case "oldSalePrice":
+                    existingProduct.setOldSalePrice(((Number) value).doubleValue());
+                    break;
+                case "inStock":
+                    existingProduct.setInStock((Boolean) value);
+                    break;
+                case "productType":
+                    existingProduct.setProductType((String) value);
+                    break;
+                case "gender":
+                    existingProduct.setGender(Gender.valueOf((String) value));
+                    break;
+                case "volume":
+                    existingProduct.setVolume(((Number) value).doubleValue());
+                    break;
+            }
+        });
+
+        return existingProduct;
+    }
+
+
+
+
+
 }
