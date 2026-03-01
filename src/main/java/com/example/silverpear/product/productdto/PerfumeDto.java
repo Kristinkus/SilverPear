@@ -1,8 +1,6 @@
 package com.example.silverpear.product.productdto;
 
 
-import com.example.silverpear.product.entity.Product;
-
 import lombok.Data;
 
 import java.util.List;
