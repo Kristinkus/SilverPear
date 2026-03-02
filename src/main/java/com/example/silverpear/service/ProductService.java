@@ -16,7 +16,6 @@ public class ProductService {
 
     protected final ProductRepository productRepository;
 
-    // Конструктор для внедрения зависимости
     public ProductService(ProductRepository productRepository) {
         this.productRepository = productRepository;
     }
