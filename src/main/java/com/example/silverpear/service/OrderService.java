@@ -72,12 +72,12 @@ public class OrderService {
     }
 
     public void demonstrateNPlusOneProblem(Long userId) {
-
+        //тут была визуализация проблем, но сейчас уже нет:)
     }
 
 
     public void demonstrateSolutionWithEntityGraph(Long userId) {
-
+        //тут была визуализация проблемы, но сейчас уже нет:)
     }
 
 
