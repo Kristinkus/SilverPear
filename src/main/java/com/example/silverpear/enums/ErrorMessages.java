@@ -5,8 +5,8 @@ public enum ErrorMessages {
     COSMETICS_NOT_FOUND("Cosmetics not found with id: "),
     PERFUME_NOT_FOUND("Perfume not found with id: "),
     USER_NOT_FOUND("User not found with id: "),
-    ORDER_NOT_FOUND("Order not found with id: ");
-
+    ORDER_NOT_FOUND("Order not found with id: "),
+    UNEXPECTED_ERROR("An unexpected error occurred");
     private final String message;
 
     ErrorMessages(String message) {

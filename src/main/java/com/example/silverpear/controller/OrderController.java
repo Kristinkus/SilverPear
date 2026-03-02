@@ -1,5 +1,6 @@
 package com.example.silverpear.controller;
 
+import com.example.silverpear.enums.ErrorMessages;
 import com.example.silverpear.errors.ErrorResponse;
 import com.example.silverpear.product.entity.Order;
 import com.example.silverpear.product.productdto.OrderRequest;
@@ -12,7 +13,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+
 import java.time.LocalDateTime;
+
 
 @RestController
 @RequestMapping("/api/orders/demo")
@@ -23,13 +26,13 @@ public class OrderController {
 
 
     @PostMapping("/without-tx")
-    public ResponseEntity<?> createOrderWithoutTransaction(@RequestBody OrderRequest request) {
+    public ResponseEntity<Object> createOrderWithoutTransaction(@RequestBody OrderRequest request) {
         try {
             Order order = orderService.createOrderWithoutTransaction(request);
             return ResponseEntity.ok(order);
         } catch (RuntimeException e) {
             ErrorResponse error = new ErrorResponse(
-                    "An unexpected error occurred",
+                    ErrorMessages.UNEXPECTED_ERROR.name(),
                     e.getMessage(),
                     LocalDateTime.now(),
                     HttpStatus.INTERNAL_SERVER_ERROR.value()
@@ -39,13 +42,13 @@ public class OrderController {
     }
 
     @PostMapping("/with-tx")
-    public ResponseEntity<?> createOrderWithTransaction(@RequestBody OrderRequest request) {
+    public ResponseEntity<Object> createOrderWithTransaction(@RequestBody OrderRequest request) {
         try {
             Order order = orderService.createOrderWithTransaction(request);
             return ResponseEntity.ok(order);
         } catch (RuntimeException e) {
             ErrorResponse error = new ErrorResponse(
-                    "An unexpected error occurred",
+                    ErrorMessages.UNEXPECTED_ERROR.name(),
                     e.getMessage(),
                     LocalDateTime.now(),
                     HttpStatus.INTERNAL_SERVER_ERROR.value()
@@ -54,29 +57,4 @@ public class OrderController {
         }
     }
 
-    @PostMapping("/with-conflict")
-    public ResponseEntity<?> createOrderWithConflict(@RequestBody OrderRequest request) {
-        try {
-            Order order = orderService.createOrderWithConflictCheck(request);
-            return ResponseEntity.ok(order);
-        } catch (RuntimeException e) {
-            if (e.getMessage().equals("Table not available")) {
-                ErrorResponse error = new ErrorResponse(
-                        "Table not available",
-                        "Conflict",
-                        LocalDateTime.now(),
-                        HttpStatus.CONFLICT.value()
-                );
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-            }
-
-            ErrorResponse error = new ErrorResponse(
-                    "An unexpected error occurred",
-                    e.getMessage(),
-                    LocalDateTime.now(),
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
-    }
 }
