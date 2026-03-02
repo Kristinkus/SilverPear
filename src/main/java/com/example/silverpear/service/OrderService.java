@@ -7,7 +7,6 @@ import com.example.silverpear.product.entity.User;
 import com.example.silverpear.repository.OrderRepository;
 import com.example.silverpear.repository.ProductRepository;
 import com.example.silverpear.repository.UserRepository;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.silverpear.product.productdto.OrderRequest;
@@ -32,46 +31,6 @@ public class OrderService {
         this.productRepository = productRepository;
     }
 
-    @Transactional
-    public Order createOrderWithItems(Long userId, List<Long> productIds, List<Integer> quantities) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Order order = new Order();
-        order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8));
-        order.setOrderDate(LocalDateTime.now());
-        order.setStatus("NEW");
-        order.setUser(user);
-
-        Order savedOrder = orderRepository.save(order);
-
-        double totalAmount = 0.0;
-
-        for (int i = 0; i < productIds.size(); i++) {
-            final int index = i;
-
-            Product product = productRepository.findById(productIds.get(index))
-                    .orElseThrow(() -> new RuntimeException("Product not found: " + productIds.get(index)));
-
-            OrderItem item = new OrderItem();
-            item.setQuantity(quantities.get(index));
-            item.setPriceAtTime(product.getSalePrice());
-            item.setProduct(product);
-            item.setOrder(savedOrder);
-
-            savedOrder.addOrderItem(item);
-
-            totalAmount += product.getSalePrice() * quantities.get(index);
-
-            if (index == 1 && productIds.size() > 2) {
-                throw new DataIntegrityViolationException("Имитация ошибки при " +
-                        "создании заказа - транзакция будет откачена");
-            }
-        }
-
-        savedOrder.setTotalAmount(totalAmount);
-        return orderRepository.save(savedOrder);
-    }
 
     public Order createOrderWithoutTransaction(OrderRequest request) {
         User user = userRepository.findById(request.getUserId())
@@ -153,52 +112,4 @@ public class OrderService {
         return orderRepository.save(savedOrder);
     }
 
-
-    @Transactional
-    public Order createOrderWithConflictCheck(OrderRequest request) {
-
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
-
-        if (request.getProductIds().contains(999L)) {
-            throw new RuntimeException("Product not available");
-        }
-
-        for (Long productId : request.getProductIds()) {
-            if (!productRepository.existsById(productId)) {
-                throw new RuntimeException("Product not found: " + productId);
-            }
-        }
-
-        Order order = new Order();
-        order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8));
-        order.setOrderDate(LocalDateTime.now());
-        order.setStatus("NEW");
-        order.setUser(user);
-
-        Order savedOrder = orderRepository.save(order);
-
-        double totalAmount = 0.0;
-
-
-        for (int i = 0; i < request.getProductIds().size(); i++) {
-            Long productId = request.getProductIds().get(i);
-            Integer quantity = request.getQuantities().get(i);
-
-            Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new RuntimeException("Product not found: " + productId));
-
-            OrderItem item = new OrderItem();
-            item.setQuantity(quantity);
-            item.setPriceAtTime(product.getSalePrice());
-            item.setProduct(product);
-            item.setOrder(savedOrder);
-
-            savedOrder.addOrderItem(item);
-            totalAmount += product.getSalePrice() * quantity;
-        }
-
-        savedOrder.setTotalAmount(totalAmount);
-        return savedOrder;
-    }
 }
