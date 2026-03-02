@@ -7,6 +7,7 @@ import com.example.silverpear.product.entity.User;
 import com.example.silverpear.repository.OrderRepository;
 import com.example.silverpear.repository.ProductRepository;
 import com.example.silverpear.repository.UserRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,13 +41,12 @@ public class OrderService {
         order.setStatus("NEW");
         order.setUser(user);
 
-        // Сохраняем заказ (без @Transactional здесь может быть частичное сохранение)
         Order savedOrder = orderRepository.save(order);
 
         double totalAmount = 0.0;
 
         for (int i = 0; i < productIds.size(); i++) {
-            final int index = i; // Создаем effectively final переменную
+            final int index = i;
 
             Product product = productRepository.findById(productIds.get(index))
                     .orElseThrow(() -> new RuntimeException("Product not found: " + productIds.get(index)));
@@ -57,14 +57,13 @@ public class OrderService {
             item.setProduct(product);
             item.setOrder(savedOrder);
 
-            // Сохраняем элемент заказа
             savedOrder.addOrderItem(item);
 
             totalAmount += product.getSalePrice() * quantities.get(index);
 
-            // Демонстрация отката транзакции при ошибке
             if (index == 1 && productIds.size() > 2) {
-                throw new RuntimeException("Имитация ошибки при создании заказа - транзакция будет откачена");
+                throw new DataIntegrityViolationException("Имитация ошибки при " +
+                        "создании заказа - транзакция будет откачена");
             }
         }
 
@@ -75,37 +74,22 @@ public class OrderService {
     public void demonstrateNPlusOneProblem(Long userId) {
         User user = userRepository.findById(userId).orElseThrow();
 
-        System.out.println("=== ДЕМОНСТРАЦИЯ ПРОБЛЕМЫ N+1 ===");
-        // Это создаст N+1 запрос (1 запрос на пользователя + N запросов на заказы)
         List<Order> orders = orderRepository.findByUser(user);
-        for (Order order : orders) {
-            // Каждый доступ к orderItems вызывает дополнительный запрос
-            System.out.println("Заказ: " + order.getOrderNumber() +
-                    ", количество товаров: " + order.getOrderItems().size());
-        }
+
     }
 
-    // Решение проблемы N+1 через @EntityGraph
+
     public void demonstrateSolutionWithEntityGraph(Long userId) {
         User user = userRepository.findById(userId).orElseThrow();
 
-        System.out.println("=== РЕШЕНИЕ ПРОБЛЕМЫ N+1 ЧЕРЕЗ @EntityGraph ===");
-        // Один запрос загружает все связанные данные
+
         List<Order> orders = orderRepository.findByUserWithItemsAndProducts(user);
-        for (Order order : orders) {
-            // Нет дополнительных запросов, данные уже загружены
-            System.out.println("Заказ: " + order.getOrderNumber() +
-                    ", количество товаров: " + order.getOrderItems().size());
-            for (OrderItem item : order.getOrderItems()) {
-                System.out.println("  Товар: " + item.getProduct().getName() +
-                        ", количество: " + item.getQuantity());
-            }
-        }
+
     }
 
-    // Демонстрация частичного сохранения без @Transactional
+
     public Order createOrderWithoutTransaction(Long userId, List<Long> productIds, List<Integer> quantities) {
-        // Этот метод будет вызван из контроллера без @Transactional на уровне сервиса
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -115,13 +99,13 @@ public class OrderService {
         order.setStatus("NEW");
         order.setUser(user);
 
-        // Заказ сохранится даже если дальше произойдет ошибка (частичное сохранение)
+
         Order savedOrder = orderRepository.save(order);
 
         double totalAmount = 0.0;
 
         for (int i = 0; i < productIds.size(); i++) {
-            final int index = i; // Создаем effectively final переменную для использования в лямбде
+            final int index = i;
             Long productId = productIds.get(index);
             Integer quantity = quantities.get(index);
 
@@ -134,9 +118,10 @@ public class OrderService {
             item.setProduct(product);
             item.setOrder(savedOrder);
 
-            // Ошибка на третьем товаре - но заказ уже сохранен!
+
             if (index == 2) {
-                throw new RuntimeException("Ошибка при добавлении товара - заказ уже сохранен без товаров");
+                throw new DataIntegrityViolationException("Ошибка при добавлении товара - " +
+                        "заказ уже сохранен без товаров");
             }
 
             savedOrder.addOrderItem(item);
