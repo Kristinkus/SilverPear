@@ -39,21 +39,18 @@ public class OrderController {
         }
     }
 
-    // Эндпоинт для демонстрации проблемы N+1
     @GetMapping("/demonstrate-nplus1/{userId}")
     public ResponseEntity<String> demonstrateNPlusOne(@PathVariable Long userId) {
         orderService.demonstrateNPlusOneProblem(userId);
         return ResponseEntity.ok("Проверьте консоль для демонстрации проблемы N+1");
     }
 
-    // Эндпоинт для демонстрации решения с @EntityGraph
     @GetMapping("/demonstrate-solution/{userId}")
     public ResponseEntity<String> demonstrateSolution(@PathVariable Long userId) {
         orderService.demonstrateSolutionWithEntityGraph(userId);
         return ResponseEntity.ok("Проверьте консоль для демонстрации решения с @EntityGraph");
     }
 
-    // Эндпоинт для демонстрации частичного сохранения без @Transactional
     @PostMapping("/create-without-transaction")
     public ResponseEntity<Object> createOrderWithoutTransaction(
             @RequestParam Long userId,

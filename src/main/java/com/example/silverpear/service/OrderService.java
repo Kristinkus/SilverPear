@@ -72,18 +72,11 @@ public class OrderService {
     }
 
     public void demonstrateNPlusOneProblem(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow();
-
-        List<Order> orders = orderRepository.findByUser(user);
 
     }
 
 
     public void demonstrateSolutionWithEntityGraph(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow();
-
-
-        List<Order> orders = orderRepository.findByUserWithItemsAndProducts(user);
 
     }
 
