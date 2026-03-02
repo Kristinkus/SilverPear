@@ -32,7 +32,7 @@ public class Product {
     private String description;
 
     @Column(name = "category", nullable = false)
-    private String category; //  вот это будет ключом
+    private String category;
 
     @Column(name = "purchasePrice", nullable = false)
     private double purchasePrice;

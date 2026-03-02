@@ -16,7 +16,7 @@ public class CosmeticsService extends ProductService {
 
     public CosmeticsService(ProductRepository productRepository, CosmeticsRepository cosmeticsRepository) {
         super(productRepository);
-        this.cosmeticsRepository = cosmeticsRepository;  // параметр присваивается полю
+        this.cosmeticsRepository = cosmeticsRepository;
     }
 
     public Cosmetics create(Cosmetics cosmetics) {
