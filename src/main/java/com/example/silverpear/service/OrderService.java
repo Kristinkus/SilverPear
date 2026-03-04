@@ -32,9 +32,9 @@ public class OrderService {
     }
 
 
-    public Order createOrderWithoutTransaction(OrderRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
+    public Order createOrderWithoutTransaction(Long userId, OrderRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
 
         Order order = new Order();
@@ -71,10 +71,10 @@ public class OrderService {
     }
 
     @Transactional
-    public Order createOrderWithTransaction(OrderRequest request) {
+    public Order createOrderWithTransaction(Long userId, OrderRequest request) {
 
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
         List<Product> products = new ArrayList<>();
         for (Long productId : request.getProductIds()) {

@@ -1,5 +1,7 @@
 package com.example.silverpear.product.entity;
 
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -45,19 +47,15 @@ public class User {
     @Column
     private String phone;
 
-    // OneToMany связь: один пользователь - много заказов
-    // CascadeType.ALL - при сохранении/удалении пользователя сохраняются/удаляются и его заказы
-    // FetchType.LAZY - заказы загружаются только при необходимости (решение проблемы производительности)
+    @JsonManagedReference
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Order> orders = new ArrayList<>();
 
-    // Вспомогательный метод для добавления заказа
     public void addOrder(Order order) {
         orders.add(order);
         order.setUser(this);
     }
 
-    // Вспомогательный метод для удаления заказа
     public void removeOrder(Order order) {
         orders.remove(order);
         order.setUser(null);

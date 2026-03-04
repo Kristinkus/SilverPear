@@ -1,5 +1,7 @@
 package com.example.silverpear.product.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -40,14 +42,15 @@ public class Order {
     @Column(name = "status")
     private String status;
 
-    @ManyToOne(fetch = FetchType.LAZY)  // Демонстрация FetchType.LAZY
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+    @JsonBackReference
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    // Вспомогательные методы для двунаправленной связи
     public void addOrderItem(OrderItem item) {
         orderItems.add(item);
         item.setOrder(this);
