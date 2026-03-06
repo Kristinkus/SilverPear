@@ -23,7 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 @RestController
 @RequestMapping("/api/orders/demo")
@@ -38,7 +38,7 @@ public class OrderController {
         List<Order> orders = orderService.findAllOrdersWithItemsAndProducts();
         List<OrderForUserDto> dtos = orders.stream()
                 .map(orderForUserMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -47,7 +47,7 @@ public class OrderController {
         List<Order> orders = orderService.findAllOrdersWithoutOptimization();
         List<OrderForUserDto> dtos = orders.stream()
                 .map(orderForUserMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -115,7 +115,6 @@ public class OrderController {
             @PathVariable Long orderId,
             @RequestBody OrderRequest request) {
         try {
-            Order existingOrder = orderService.findOrderById(orderId);
             Order updatedOrder = orderService.updateOrder(orderId, request);
             OrderForUserDto dto = orderForUserMapper.toDto(updatedOrder);
             return ResponseEntity.ok(dto);

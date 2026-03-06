@@ -8,7 +8,7 @@ import com.example.silverpear.product.productdto.UserResponse;
 import com.example.silverpear.product.productdto.UserWithOrdersDto;
 import com.example.silverpear.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.Nullable;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -59,7 +59,6 @@ public class UserService {
     }
 
     public List<User> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        return users;
+        return userRepository.findAll();
     }
 }
