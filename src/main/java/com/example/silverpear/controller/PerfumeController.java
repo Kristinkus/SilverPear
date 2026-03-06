@@ -35,9 +35,11 @@ public class PerfumeController {
     }
 
     @PostMapping
-    public ResponseEntity<Perfume> savePerfume(@RequestBody Perfume perfume) {
+    public ResponseEntity<PerfumeDto> savePerfume(@RequestBody PerfumeDto perfumeDto) {
+        Perfume perfume = perfumeMapper.toEntity(perfumeDto);
         Perfume savedPerfume = perfumeService.create(perfume);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedPerfume);
+        PerfumeDto savedDto = perfumeMapper.toDto(savedPerfume);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedDto);
     }
 
     @DeleteMapping("/{id}")

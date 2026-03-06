@@ -39,9 +39,11 @@ public class CosmeticsController {
     }
 
     @PostMapping
-    public ResponseEntity<Cosmetics> saveCosmetics(@RequestBody Cosmetics cosmetics) {
+    public ResponseEntity<CosmeticsDto> saveCosmetics(@RequestBody CosmeticsDto cosmeticsDto) {
+        Cosmetics cosmetics = cosmeticsMapper.toEntity(cosmeticsDto);
         Cosmetics savedCosmetics = cosmeticsService.create(cosmetics);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedCosmetics);
+        CosmeticsDto savedDto = cosmeticsMapper.toDto(savedCosmetics);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedDto);
     }
 
     @DeleteMapping("/{id}")
