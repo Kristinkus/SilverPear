@@ -24,4 +24,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = {"orders"})
     @Query("SELECT u FROM User u WHERE u.id = :id")
     Optional<User> findByIdWithOrders(@Param("id") Long id);
+
+    @EntityGraph(attributePaths = {"favorites"})
+    @Query("SELECT u FROM User u WHERE u.id = :id")
+    Optional<User> findByIdWithFavorites(@Param("id") Long id);
+
+    @EntityGraph(attributePaths = {"orders", "orders.orderItems", "orders.orderItems.product"})
+    @Query("SELECT u FROM User u WHERE u.id = :id")
+    Optional<User> findByIdWithOrdersAndItems(@Param("id") Long id);
+
 }

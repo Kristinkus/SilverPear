@@ -14,20 +14,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByUser(User user);
 
-    @EntityGraph(attributePaths = {"orderItems", "orderItems.product"})
-    @Query("SELECT o FROM Order o WHERE o.user = :user")
-    List<Order> findByUserWithItemsAndProducts(User user);
-
-    @Query("SELECT DISTINCT o FROM Order o " +
-            "LEFT JOIN FETCH o.orderItems oi " +
-            "LEFT JOIN FETCH oi.product " +
-            "WHERE o.user = :user")
-    List<Order> findByUserWithItemsAndProductsFetchJoin(User user);
-
     @Query("SELECT o FROM Order o")
     List<Order> findAllOrdersWithoutOptimization();
 
-    @EntityGraph(attributePaths = {"user", "orderItems", "orderItems.product"})
+    @EntityGraph(attributePaths = {"orderItems", "orderItems.product"})
     @Query("SELECT o FROM Order o")
-    List<Order> findAllOrdersWithOptimization();
+    List<Order> findAllOrdersWithItemsAndProducts();
+
+    @Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.product")
+    List<Order> findAllOrdersWithFetchJoin();
 }

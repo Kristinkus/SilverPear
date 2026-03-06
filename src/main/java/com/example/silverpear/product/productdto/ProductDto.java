@@ -13,7 +13,7 @@ public class ProductDto {
     private String name;
     private String brand;
     private String description;
-    private String category; //  вот это будет ключом
+    private String category;
     private double salePrice;
     private double oldSalePrice;
     private boolean inStock;

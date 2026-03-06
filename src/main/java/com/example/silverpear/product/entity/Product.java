@@ -1,4 +1,8 @@
 package com.example.silverpear.product.entity;
+
+import com.example.silverpear.enums.Gender;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -8,14 +12,21 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Data;
-import com.example.silverpear.enums.Gender;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "products")
 @Inheritance(strategy = InheritanceType.JOINED)
-@Data
+@Getter
+@Setter
 public class Product {
 
     @Id
@@ -28,7 +39,7 @@ public class Product {
     @Column(name = "brand", nullable = false)
     private String brand;
 
-    @Column(name = "description", nullable = true)
+    @Column(name = "description")
     private String description;
 
     @Column(name = "category", nullable = false)
@@ -55,9 +66,14 @@ public class Product {
 
     @Column(name = "volume")
     private double volume;
-/*
-    @ManyToMany(name = "product_orders",
-                joinColumns = @JoinColumn(name = product_id),
-                )
-*/
+
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<OrderItem> orderItems;
+
+
+    @ManyToMany(mappedBy = "favorites")
+    @JsonIgnore
+    private Set<User> favoritedBy;
 }

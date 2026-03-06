@@ -1,15 +1,16 @@
 package com.example.silverpear.service;
 
+import com.example.silverpear.enums.ErrorMessages;
 import com.example.silverpear.product.entity.Order;
 import com.example.silverpear.product.entity.OrderItem;
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.product.entity.User;
+import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.repository.OrderRepository;
 import com.example.silverpear.repository.ProductRepository;
 import com.example.silverpear.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.silverpear.product.productdto.OrderRequest;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,7 +37,6 @@ public class OrderService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-
         Order order = new Order();
         order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8));
         order.setOrderDate(LocalDateTime.now());
@@ -47,11 +47,9 @@ public class OrderService {
 
         double totalAmount = 0.0;
 
-
         for (int i = 0; i < request.getProductIds().size(); i++) {
             Long productId = request.getProductIds().get(i);
             Integer quantity = request.getQuantities().get(i);
-
 
             Product product = productRepository.findById(productId)
                     .orElseThrow(() -> new RuntimeException("Some products not found - order already saved!"));
@@ -70,11 +68,12 @@ public class OrderService {
         return orderRepository.save(savedOrder);
     }
 
+
     @Transactional
     public Order createOrderWithTransaction(Long userId, OrderRequest request) {
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
 
         List<Product> products = new ArrayList<>();
         for (Long productId : request.getProductIds()) {
@@ -89,10 +88,7 @@ public class OrderService {
         order.setStatus("NEW");
         order.setUser(user);
 
-        Order savedOrder = orderRepository.save(order);
-
         double totalAmount = 0.0;
-
 
         for (int i = 0; i < request.getProductIds().size(); i++) {
             Product product = products.get(i);
@@ -102,14 +98,63 @@ public class OrderService {
             item.setQuantity(quantity);
             item.setPriceAtTime(product.getSalePrice());
             item.setProduct(product);
-            item.setOrder(savedOrder);
+            item.setOrder(order);
 
-            savedOrder.addOrderItem(item);
+            order.addOrderItem(item);
             totalAmount += product.getSalePrice() * quantity;
         }
 
-        savedOrder.setTotalAmount(totalAmount);
-        return orderRepository.save(savedOrder);
+        order.setTotalAmount(totalAmount);
+        return orderRepository.save(order);
     }
 
+
+    public List<Order> findAllOrdersWithoutOptimization() {
+        return orderRepository.findAllOrdersWithoutOptimization();
+    }
+
+    public List<Order> findAllOrdersWithItemsAndProducts() {
+        return orderRepository.findAllOrdersWithItemsAndProducts();
+    }
+
+    public void deleteOrder(Long orderId) {
+        orderRepository.deleteById(orderId);
+    }
+
+    public Order findOrderById(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException(ErrorMessages.ORDER_NOT_FOUND.withId(orderId)));
+    }
+
+    @Transactional
+    public Order updateOrder(Long orderId, OrderRequest request) {
+
+        Order existingOrder = findOrderById(orderId);
+        existingOrder.getOrderItems().clear();
+
+        List<Product> products = new ArrayList<>();
+        for (Long productId : request.getProductIds()) {
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+            products.add(product);
+        }
+
+        double totalAmount = 0.0;
+        for (int i = 0; i < request.getProductIds().size(); i++) {
+            Product product = products.get(i);
+            Integer quantity = request.getQuantities().get(i);
+
+            OrderItem item = new OrderItem();
+            item.setQuantity(quantity);
+            item.setPriceAtTime(product.getSalePrice());
+            item.setProduct(product);
+            item.setOrder(existingOrder);
+
+            existingOrder.addOrderItem(item);
+            totalAmount += product.getSalePrice() * quantity;
+        }
+        existingOrder.setTotalAmount(totalAmount);
+        return orderRepository.save(existingOrder);
+    }
 }
+

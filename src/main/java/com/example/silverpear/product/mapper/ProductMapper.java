@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 
+import com.example.silverpear.product.productdto.ProductSimpleDto;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -83,6 +84,15 @@ public class ProductMapper {
         return productsList;
     }
 
+    public ProductSimpleDto toSimpleDto(Product product) {
+        if (product == null) {
+            return null;
+        }
+        ProductSimpleDto dto = new ProductSimpleDto();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        return dto;
+    }
 
 
 }
