@@ -20,6 +20,7 @@
 - **User** (пользователи с логином, паролем, контактными данными)
 - **Order** (заказы с номером, датой, статусом)
 - **OrderItem** (позиции заказа с количеством и ценой)
+- **Favorites** (Избранные товары)
 
 ### Связи:
 - **OneToMany**: Один пользователь → много заказов
@@ -83,17 +84,55 @@
 
 ### Управление пользователями
 
-**1. CRUD операции**
+**1. CRUD операции для пользователей (Users)**
 - `GET /api/users` - все пользователи
 - `GET /api/users/{id}` - пользователь по ID
 - `POST /api/users` - создание
 - `PUT /api/users/{id}` - обновление
 - `DELETE /api/users/{id}` - удаление
 
-**2. Пользователь с заказами (демонстрация N+1)**
-- **Метод:** `GET`
-- **Эндпоинт:** `/api/users/{id}/orders`
-- **Описание:** Загружает пользователя с его заказами (оптимизировано через @EntityGraph)
+**2. CRUD операции для товаров (Products)**
+- `GET /api/products` - все товары
+- `GET /api/products/{id}` - товар по ID
+- `POST /api/products` - создание
+- `PUT /api/products/{id}` - полное обновление
+- `PATCH /api/products/{id}` - частичное обновление
+- `DELETE /api/products/{id}` - удаление
+
+**3. CRUD операции для парфюмерии (Perfume)**
+- `GET /api/perfumes` - все духи
+- `GET /api/perfumes/{id}` - духи по ID
+- `POST /api/perfumes` - создание
+- `PUT /api/perfumes/{id}` - обновление
+- `DELETE /api/perfumes/{id}` - удаление
+
+**4. CRUD операции для косметики (Cosmetics)**
+- `GET /api/cosmetics` - вся косметика
+- `GET /api/cosmetics/{id}` - косметика по ID
+- `POST /api/cosmetics` - создание
+- `PUT /api/cosmetics/{id}` - обновление
+- `DELETE /api/cosmetics/{id}` - удаление
+
+**5. CRUD операции для заказов (Orders)**
+- `GET /api/orders/demo/without-nplus1` - все заказы с оптимизацией
+- `GET /api/orders/demo/nplus1` - все заказы с проблемой N+1
+- `GET /api/orders/demo/{orderId}` - заказ по ID
+- `POST /api/orders/demo/with-transaction?userId={id}` - создание с транзакцией
+- `POST /api/orders/demo/without-transaction?userId={id}` - создание без транзакции
+- `PUT /api/orders/demo/{orderId}` - обновление заказа
+- `PATCH /api/orders/demo/{userId}/orders/{orderId}?status={status}` - обновление статуса
+- `DELETE /api/orders/demo/{orderId}` - удаление
+
+**6. CRUD операции для избранного (Favorites)**
+- `GET /api/users/{userId}/favorites` - все избранное пользователя
+- `POST /api/users/{userId}/favorites/{productId}` - добавить в избранное
+- `DELETE /api/users/{userId}/favorites/{productId}` - удалить из избранного
+
+**7. Поиск и фильтрация**
+- `GET /api/products/search?name={name}` - поиск по названию
+- `GET /api/products/search?brand={brand}` - поиск по бренду
+- `GET /api/products/search?category={category}` - поиск по категории
+- `GET /api/products/search?name={name}&brand={brand}&category={category}` - комбинированный поиск
 
 ### Управление заказами
 
