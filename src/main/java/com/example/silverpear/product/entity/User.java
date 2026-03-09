@@ -63,13 +63,4 @@ public class User {
     )
     private Set<Product> favorites = new HashSet<>();
 
-    public void addOrder(Order order) {
-        orders.add(order);
-        order.setUser(this);
-    }
-
-    public void removeOrder(Order order) {
-        orders.remove(order);
-        order.setUser(null);
-    }
 }

@@ -87,7 +87,7 @@ public class ProductController {
     @PatchMapping("/{id}")
     public ResponseEntity<ProductDto> patchProduct(
             @PathVariable Long id,
-            @RequestBody Map<String, Object> updates) {  // Принимаем Map вместо DTO
+            @RequestBody Map<String, Object> updates) {
 
         Product updatedProduct = productService.patchUpdate(id, updates);
         return ResponseEntity.ok(productMapper.toDto(updatedProduct));
