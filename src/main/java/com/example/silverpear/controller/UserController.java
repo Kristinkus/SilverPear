@@ -1,9 +1,14 @@
 package com.example.silverpear.controller;
 
+import com.example.silverpear.product.mapper.OrderForUserMapper;
+import com.example.silverpear.product.entity.Order;
 import com.example.silverpear.product.entity.User;
+import com.example.silverpear.product.productdto.OrderForUserDto;
+import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.product.productdto.UserRequest;
 import com.example.silverpear.product.productdto.UserResponse;
 import com.example.silverpear.product.productdto.UserWithOrdersDto;
+import com.example.silverpear.service.OrderService;
 import com.example.silverpear.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,6 +30,8 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private  final OrderService orderService;
+    private final OrderForUserMapper orderForUserMapper;
 
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
@@ -57,5 +64,15 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{userId}/orders")
+    public ResponseEntity<OrderForUserDto> createOrderForUser(
+            @PathVariable Long userId,
+            @RequestBody OrderRequest request) {
+
+        Order order = orderService.createOrderWithTransaction(userId, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(orderForUserMapper.toDto(order));
     }
 }

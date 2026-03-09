@@ -45,8 +45,4 @@ public class FavoriteController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{productId}/exists")
-    public ResponseEntity<Boolean> isFavorite(@PathVariable Long userId, @PathVariable Long productId) {
-        return ResponseEntity.ok(favoriteService.isFavorite(userId, productId));
-    }
 }

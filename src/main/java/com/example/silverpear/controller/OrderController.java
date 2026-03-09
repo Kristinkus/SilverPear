@@ -1,6 +1,7 @@
 package com.example.silverpear.controller;
 
 import com.example.silverpear.enums.ErrorMessages;
+import com.example.silverpear.enums.OrderStatus;
 import com.example.silverpear.errors.ErrorResponse;
 import com.example.silverpear.product.entity.Order;
 import com.example.silverpear.product.mapper.OrderForUserMapper;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -23,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
 
 
 @RestController
@@ -122,4 +125,21 @@ public class OrderController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
+
+    @PatchMapping("/{userId}/orders/{orderId}")
+    public ResponseEntity<OrderForUserDto> updateOrderStatus(
+            @PathVariable Long userId,
+            @PathVariable Long orderId,
+            @RequestParam OrderStatus status) {
+
+
+        Order order = orderService.findOrderById(orderId);
+        if (!order.getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Order does not belong to user");
+        }
+
+        Order updatedOrder = orderService.updateOrderStatus(orderId, status);
+        return ResponseEntity.ok(orderForUserMapper.toDto(updatedOrder));
+    }
+
 }

@@ -27,7 +27,7 @@ public class FavoriteService {
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
         user.getFavorites().add(product);
-        userRepository.save(user); // каскад не нужен, но сохраняем связь
+        userRepository.save(user);
     }
 
     @Transactional
@@ -49,4 +49,5 @@ public class FavoriteService {
         return favoriteRepository.findFavoritesByUserId(userId)
                 .stream().anyMatch(p -> p.getId().equals(productId));
     }
+
 }

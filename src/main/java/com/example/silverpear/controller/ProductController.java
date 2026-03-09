@@ -92,6 +92,6 @@ public class ProductController {
         Product updatedProduct = productService.patchUpdate(id, updates);
         return ResponseEntity.ok(productMapper.toDto(updatedProduct));
     }
-    //добавить сортировку по параметру
+
 
 }

@@ -22,7 +22,7 @@ public class OrderForUserMapper {
         dto.setOrderNumber(order.getOrderNumber());
         dto.setOrderDate(order.getOrderDate());
         dto.setTotalAmount(order.getTotalAmount());
-        dto.setStatus(order.getStatus());
+        dto.setStatus(order.getStatus().name());
         dto.setOrderItems(order.getOrderItems().stream()
                 .map(orderItemMapper::toDto)
                 .collect(Collectors.toList()));

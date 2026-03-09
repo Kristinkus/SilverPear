@@ -1,6 +1,7 @@
 package com.example.silverpear.service;
 
 import com.example.silverpear.enums.ErrorMessages;
+import com.example.silverpear.enums.OrderStatus;
 import com.example.silverpear.product.entity.Order;
 import com.example.silverpear.product.entity.OrderItem;
 import com.example.silverpear.product.entity.Product;
@@ -40,7 +41,7 @@ public class OrderService {
         Order order = new Order();
         order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8));
         order.setOrderDate(LocalDateTime.now());
-        order.setStatus("NEW");
+        order.setStatus(OrderStatus.NEW);
         order.setUser(user);
 
         Order savedOrder = orderRepository.save(order);
@@ -85,7 +86,7 @@ public class OrderService {
         Order order = new Order();
         order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8));
         order.setOrderDate(LocalDateTime.now());
-        order.setStatus("NEW");
+        order.setStatus(OrderStatus.NEW);
         order.setUser(user);
 
         double totalAmount = 0.0;
@@ -155,6 +156,13 @@ public class OrderService {
         }
         existingOrder.setTotalAmount(totalAmount);
         return orderRepository.save(existingOrder);
+    }
+
+    @Transactional
+    public Order updateOrderStatus(Long orderId, OrderStatus status) {
+        Order order = findOrderById(orderId);
+        order.setStatus(status);
+        return order;
     }
 }
 

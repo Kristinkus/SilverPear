@@ -39,9 +39,9 @@ public class ProductMapper {
         dto.setDescription(product.getDescription());
         dto.setCategory(product.getCategory());
         dto.setSalePrice(product.getSalePrice());
-        dto.setOldSalePrice(product.getOldSalePrice());
+
         dto.setInStock(product.isInStock());
-        dto.setProductType(product.getProductType());
+        dto.setProductType(product.getType());
         dto.setGender(product.getGender());
         dto.setVolume(product.getVolume());
     }
@@ -53,9 +53,9 @@ public class ProductMapper {
         product.setDescription(dto.getDescription());
         product.setCategory(dto.getCategory());
         product.setSalePrice(dto.getSalePrice());
-        product.setOldSalePrice(dto.getOldSalePrice());
+
         product.setInStock(dto.isInStock());
-        product.setProductType(dto.getProductType());
+        product.setType(dto.getProductType());
         product.setGender(dto.getGender());
         product.setVolume(dto.getVolume());
     }

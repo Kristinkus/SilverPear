@@ -45,20 +45,14 @@ public class Product {
     @Column(name = "category", nullable = false)
     private String category;
 
-    @Column(name = "purchasePrice", nullable = false)
-    private double purchasePrice;
-
     @Column(name = "salePrice", nullable = false)
     private double salePrice;
-
-    @Column(name = "oldSalePrice", nullable = false)
-    private double oldSalePrice;
 
     @Column(name = "inStock", nullable = false)
     private boolean inStock;
 
-    @Column(name = "productType")
-    private String productType;
+    @Column(name = "Type")
+    private String type;
 
     @Column(name = "gender")
     @Enumerated(EnumType.STRING)

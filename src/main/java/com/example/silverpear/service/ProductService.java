@@ -76,11 +76,11 @@ public class ProductService {
         existing.setBrand(source.getBrand());
         existing.setDescription(source.getDescription());
         existing.setCategory(source.getCategory());
-        existing.setPurchasePrice(source.getPurchasePrice());
+
         existing.setSalePrice(source.getSalePrice());
-        existing.setOldSalePrice(source.getOldSalePrice());
+
         existing.setInStock(source.isInStock());
-        existing.setProductType(source.getProductType());
+        existing.setType(source.getType());
         existing.setGender(source.getGender());
         existing.setVolume(source.getVolume());
     }
@@ -111,14 +111,11 @@ public class ProductService {
                 case "salePrice":
                     existingProduct.setSalePrice(((Number) value).doubleValue());
                     break;
-                case "oldSalePrice":
-                    existingProduct.setOldSalePrice(((Number) value).doubleValue());
-                    break;
                 case "inStock":
                     existingProduct.setInStock((Boolean) value);
                     break;
                 case "productType":
-                    existingProduct.setProductType((String) value);
+                    existingProduct.setType((String) value);
                     break;
                 case "gender":
                     existingProduct.setGender(Gender.valueOf((String) value));
