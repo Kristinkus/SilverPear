@@ -1,6 +1,7 @@
 package com.example.silverpear.service;
 
 import com.example.silverpear.enums.Gender;
+import com.example.silverpear.enums.SkinType;
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.repository.ProductRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -130,6 +131,15 @@ public class ProductService {
 
         return existingProduct;
     }
+
+
+    public List<Product> searchInRange(Double lowPrice, Double highPrice) {
+        return productRepository.findInRange(lowPrice, highPrice);
+    }
+
+    //public List<Product> findBySkinType(SkinType skinType) {
+    //    return productRepository.findBySkinType(skinType);
+    //}
 
 
 }

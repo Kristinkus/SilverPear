@@ -1,6 +1,8 @@
 package com.example.silverpear.controller;
 
+import com.example.silverpear.enums.SkinType;
 import com.example.silverpear.product.entity.Product;
+import com.example.silverpear.product.mapper.CosmeticsMapper;
 import com.example.silverpear.product.productdto.ProductDto;
 import com.example.silverpear.product.mapper.ProductMapper;
 import com.example.silverpear.service.ProductService;
@@ -31,6 +33,7 @@ public class ProductController {
 
     private final ProductService productService;
     private final ProductMapper productMapper;
+    private final CosmeticsMapper cosmeticsMapper;
 
     @GetMapping
     public ResponseEntity<List<ProductDto>> getAllProducts() {
@@ -93,5 +96,22 @@ public class ProductController {
         return ResponseEntity.ok(productMapper.toDto(updatedProduct));
     }
 
+
+    @GetMapping("/in-range")
+    public ResponseEntity<List<ProductDto>> getProductsInRange(
+            @RequestParam Double lowPrice,
+            @RequestParam Double highPrice) {
+        List<Product> productsInRange = productService.searchInRange(lowPrice, highPrice);
+        return ResponseEntity.ok(productMapper.toDtoList(productsInRange));
+    }
+/*
+    @GetMapping("/skin-type")
+    public ResponseEntity<List<Product>> getSkinTypes(
+            @RequestParam SkinType skinType
+    ) {
+        List<Cosmetics> products = productService.findBySkinType(skinType);
+        return ResponseEntity.ok(cosmeticsMapper.toCosmeticsDtoList());
+    }
+*/
 
 }
