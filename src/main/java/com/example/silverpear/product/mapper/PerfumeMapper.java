@@ -23,7 +23,8 @@ public class PerfumeMapper extends ProductMapper {
         }
 
         Perfume perfume = (Perfume) product;
-        PerfumeDto dto = (PerfumeDto) super.toDto(perfume);
+        PerfumeDto dto = new PerfumeDto();
+        fillBaseFields(perfume, dto);
 
         dto.setTopNotes(perfume.getTopNotes());
         dto.setMiddleNotes(perfume.getMiddleNotes());
@@ -37,7 +38,8 @@ public class PerfumeMapper extends ProductMapper {
             return null;
         }
 
-        Perfume perfume = (Perfume) super.toEntity(dto);
+        Perfume perfume = new Perfume();
+        fillBaseFieldsToEntity(perfume, dto);
 
         perfume.setTopNotes(dto.getTopNotes());
         perfume.setMiddleNotes(dto.getMiddleNotes());

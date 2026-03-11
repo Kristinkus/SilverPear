@@ -164,5 +164,10 @@ public class OrderService {
         order.setStatus(status);
         return order;
     }
+
+
+    public List<Order> findByStatus(OrderStatus status) {
+        return orderRepository.findOrderByStatus(status);
+    }
 }
 

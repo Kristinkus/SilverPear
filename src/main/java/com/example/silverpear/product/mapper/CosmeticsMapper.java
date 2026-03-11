@@ -23,7 +23,8 @@ public class CosmeticsMapper extends ProductMapper {
         }
 
         Cosmetics cosmetics = (Cosmetics) product;
-        CosmeticsDto dto = (CosmeticsDto) super.toDto(cosmetics);
+        CosmeticsDto dto = new CosmeticsDto();
+        fillBaseFields(cosmetics, dto);
 
         dto.setPrescription(cosmetics.getPrescription());
         dto.setSkinType(cosmetics.getSkinType());
@@ -37,7 +38,9 @@ public class CosmeticsMapper extends ProductMapper {
             return null;
         }
 
-        Cosmetics cosmetics = (Cosmetics) super.toEntity(dto);
+
+        Cosmetics cosmetics = new Cosmetics();
+        fillBaseFieldsToEntity(cosmetics, dto);
 
         cosmetics.setPrescription(dto.getPrescription());
         cosmetics.setSkinType(dto.getSkinType());

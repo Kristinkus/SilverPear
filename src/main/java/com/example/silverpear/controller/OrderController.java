@@ -27,14 +27,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/orders/demo")
+@RequestMapping("/api/orders")
 @RequiredArgsConstructor
 public class OrderController {
 
     private final OrderService orderService;
     private final OrderForUserMapper orderForUserMapper;
 
-    @GetMapping("/without-nplus1")
+    @GetMapping()
     public ResponseEntity<List<OrderForUserDto>> getAllOrders() {
         List<Order> orders = orderService.findAllOrdersWithItemsAndProducts();
         List<OrderForUserDto> dtos = orders.stream()
@@ -43,35 +43,8 @@ public class OrderController {
         return ResponseEntity.ok(dtos);
     }
 
-    @GetMapping("/nplus1")
-    public ResponseEntity<List<OrderForUserDto>> getAllOrdersNPlus1() {
-        List<Order> orders = orderService.findAllOrdersWithoutOptimization();
-        List<OrderForUserDto> dtos = orders.stream()
-                .map(orderForUserMapper::toDto)
-                .toList();
-        return ResponseEntity.ok(dtos);
-    }
 
-    @PostMapping("/without-transaction")
-    public ResponseEntity<Object> createOrderWithoutTransaction(
-            @RequestParam Long userId,
-            @RequestBody OrderRequest request) {
-        try {
-            Order order = orderService.createOrderWithoutTransaction(userId, request);
-            OrderForUserDto dto = orderForUserMapper.toDto(order);
-            return ResponseEntity.ok(dto);
-        } catch (RuntimeException e) {
-            ErrorResponse error = new ErrorResponse(
-                    ErrorMessages.UNEXPECTED_ERROR.name(),
-                    e.getMessage(),
-                    LocalDateTime.now(),
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
-    }
-
-    @PostMapping("/with-transaction")
+    @PostMapping("/create")
     public ResponseEntity<Object> createOrderWithTransaction(
             @RequestParam Long userId,
             @RequestBody OrderRequest request) {
@@ -124,7 +97,7 @@ public class OrderController {
         }
     }
 
-    @PatchMapping("/{userId}/orders/{orderId}")
+    @PatchMapping("/{userId}/user-orders/{orderId}")
     public ResponseEntity<OrderForUserDto> updateOrderStatus(
             @PathVariable Long userId,
             @PathVariable Long orderId,
@@ -139,5 +112,14 @@ public class OrderController {
         Order updatedOrder = orderService.updateOrderStatus(orderId, status);
         return ResponseEntity.ok(orderForUserMapper.toDto(updatedOrder));
     }
+
+    @GetMapping("/status")
+    public ResponseEntity<List<OrderForUserDto>> getOrdersByStatus(
+            @RequestParam OrderStatus status) {
+        List<Order> order = orderService.findByStatus(status);
+        return ResponseEntity.ok(orderForUserMapper.toDtoList(order));
+    }
+
+
 
 }

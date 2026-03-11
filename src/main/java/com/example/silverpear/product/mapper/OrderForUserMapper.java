@@ -5,6 +5,9 @@ import com.example.silverpear.product.productdto.OrderForUserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -27,5 +30,13 @@ public class OrderForUserMapper {
                 .map(orderItemMapper::toDto)
                 .collect(Collectors.toList()));
         return dto;
+    }
+
+    public List<OrderForUserDto> toDtoList(List<Order> orders) {
+        List<OrderForUserDto> ordersListDto = new ArrayList<>();
+        for (Order order : orders) {
+            ordersListDto.add(toDto(order));
+        }
+        return ordersListDto;
     }
 }
