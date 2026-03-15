@@ -107,15 +107,7 @@ public class ProductController {
         List<Product> productsInRange = productService.searchInRange(lowPrice, highPrice);
         return ResponseEntity.ok(productMapper.toDtoList(productsInRange));
     }
-/*
-    @GetMapping("/skin-type")
-    public ResponseEntity<List<Product>> getSkinTypes(
-            @RequestParam SkinType skinType
-    ) {
-        List<Cosmetics> products = productService.findBySkinType(skinType);
-        return ResponseEntity.ok(cosmeticsMapper.toCosmeticsDtoList());
-    }
-*/
+
     @GetMapping("/page")
     public ResponseEntity<Page<ProductDto>> getProductsPaged(
             @RequestParam(defaultValue = "0") int page,

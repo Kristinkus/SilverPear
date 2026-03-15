@@ -144,7 +144,7 @@ public class OrderController {
 
         List<OrderForUserDto> dtos = orders.stream()
                 .map(orderForUserMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
 
         return ResponseEntity.ok(dtos);
     }
@@ -158,11 +158,9 @@ public class OrderController {
 
         List<OrderForUserDto> dtos = orders.stream()
                 .map(orderForUserMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
 
         return ResponseEntity.ok(dtos);
     }
-
-
 }
 
