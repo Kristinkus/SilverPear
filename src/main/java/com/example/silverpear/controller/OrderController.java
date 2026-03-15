@@ -9,6 +9,10 @@ import com.example.silverpear.product.productdto.OrderForUserDto;
 import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -119,7 +123,31 @@ public class OrderController {
         List<Order> order = orderService.findByStatus(status);
         return ResponseEntity.ok(orderForUserMapper.toDtoList(order));
     }
+    /*
+    @GetMapping("/page-status")
+    public ResponseEntity<Page<OrderForUserDto>> getAllOrders(
+            @PageableDefault(size = 10, sort = "orderDate", direction = Sort.Direction.DESC)
+            Pageable pageable) {
 
+        Page<Order> ordersPage = orderService.getOrdersPage(pageable, 5, orderDate);
+        Page<OrderForUserDto> dtoPage = ordersPage.map(orderForUserMapper::toDto);
+        return ResponseEntity.ok(dtoPage);
+    }
+    */
 
+    @GetMapping("/pageable")
+    public ResponseEntity<Page<OrderForUserDto>> getAllOrders(
+            @PageableDefault(size = 2, sort = "orderDate", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+
+        Page<Order> ordersPage = orderService.getOrdersPage(pageable);
+        Page<OrderForUserDto> dtoPage = ordersPage.map(orderForUserMapper::toDto);
+        return ResponseEntity.ok(dtoPage);
+    }
 
 }
+
+/*
+    Поиск по вложенной сущности
+
+ */

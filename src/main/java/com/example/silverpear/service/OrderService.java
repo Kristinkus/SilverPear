@@ -6,10 +6,16 @@ import com.example.silverpear.product.entity.Order;
 import com.example.silverpear.product.entity.OrderItem;
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.product.entity.User;
+import com.example.silverpear.product.mapper.OrderForUserMapper;
+import com.example.silverpear.product.productdto.OrderForUserDto;
 import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.repository.OrderRepository;
 import com.example.silverpear.repository.ProductRepository;
 import com.example.silverpear.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +30,15 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final OrderForUserMapper orderForUserMapper;
 
     public OrderService(OrderRepository orderRepository,
                         UserRepository userRepository,
-                        ProductRepository productRepository) {
+                        ProductRepository productRepository, OrderForUserMapper orderForUserMapper) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
+        this.orderForUserMapper = orderForUserMapper;
     }
 
 
@@ -168,6 +176,16 @@ public class OrderService {
 
     public List<Order> findByStatus(OrderStatus status) {
         return orderRepository.findOrderByStatus(status);
+    }
+
+    public Page<OrderForUserDto> getOrdersPage(int page, int size, String sortBy) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).descending());
+        Page<Order> orders = orderRepository.findAll(pageable);
+        return orders.map(orderForUserMapper::toDto);
+    }
+
+    public Page<Order> getOrdersPage(Pageable pageable) {
+        return orderRepository.findAll(pageable);
     }
 }
 

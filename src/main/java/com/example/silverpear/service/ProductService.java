@@ -1,9 +1,11 @@
 package com.example.silverpear.service;
 
 import com.example.silverpear.enums.Gender;
-import com.example.silverpear.enums.SkinType;
+
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.repository.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import com.example.silverpear.enums.ErrorMessages;
@@ -140,6 +142,10 @@ public class ProductService {
     //public List<Product> findBySkinType(SkinType skinType) {
     //    return productRepository.findBySkinType(skinType);
     //}
+
+    public Page<Product> findAll(Pageable pageable) {
+        return productRepository.findAll(pageable);
+    }
 
 
 }

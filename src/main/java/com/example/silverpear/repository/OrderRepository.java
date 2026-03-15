@@ -3,6 +3,8 @@ package com.example.silverpear.repository;
 import com.example.silverpear.enums.OrderStatus;
 import com.example.silverpear.product.entity.Order;
 import com.example.silverpear.product.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -35,6 +37,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                    "WHERE o.status = :status\n",
             nativeQuery = true)
     List<Order> findOrdersWithItemsByStatusNative(@Param("status") String status);
+
+    Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
 
 

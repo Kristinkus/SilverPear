@@ -1,8 +1,10 @@
 package com.example.silverpear.repository;
 
-import com.example.silverpear.enums.SkinType;
+
 import com.example.silverpear.product.entity.Product;
-import org.springframework.data.jpa.repository.EntityGraph;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,5 +30,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     //@Query("SELECT p FROM Product p LEFT JOIN Cosmetics c ON p.id = c.id WHERE c.skin_type = :skinType")
     //List<Product> findBySkinType(@Param("skinType") SkinType skinType);
 
+
+    Page<Product> findBySalePrice(double lowPrice, double highPrice, Pageable pageable);
 
 }

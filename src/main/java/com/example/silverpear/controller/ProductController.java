@@ -1,12 +1,15 @@
 package com.example.silverpear.controller;
 
-import com.example.silverpear.enums.SkinType;
+
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.product.mapper.CosmeticsMapper;
 import com.example.silverpear.product.productdto.ProductDto;
 import com.example.silverpear.product.mapper.ProductMapper;
 import com.example.silverpear.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -113,5 +116,14 @@ public class ProductController {
         return ResponseEntity.ok(cosmeticsMapper.toCosmeticsDtoList());
     }
 */
-
+    @GetMapping("/page")
+    public ResponseEntity<Page<ProductDto>> getProductsPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "3") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Product> productPage = productService.findAll(pageable);
+        Page<ProductDto> dtoPage = productPage.map(productMapper::toDto);
+        return ResponseEntity.ok(dtoPage);
+    }
 }
+
