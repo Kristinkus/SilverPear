@@ -41,5 +41,23 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
 
+    @Query("SELECT DISTINCT o FROM Order o " +
+            "JOIN o.orderItems oi " +
+            "JOIN oi.product p " +
+            "WHERE p.brand = :brand " +
+            "AND o.totalAmount > :minAmount")
+    List<Order> findOrdersByBrandAndStatusAndMinAmount(
+            @Param("brand") String brand,
+            @Param("minAmount") Double minAmount);
 
+
+    @Query(value = "SELECT DISTINCT o.* FROM orders o " +
+            "JOIN order_items oi ON o.id = oi.order_id " +
+            "JOIN products p ON oi.product_id = p.id " +
+            "WHERE p.brand = :brand " +
+            "AND o.total_amount > :minAmount",
+            nativeQuery = true)
+    List<Order> findOrdersByBrandAndStatusAndMinAmountNative(
+            @Param("brand") String brand,
+            @Param("minAmount") Double minAmount);
 }

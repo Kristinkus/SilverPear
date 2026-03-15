@@ -5,9 +5,6 @@ import com.example.silverpear.product.entity.Perfume;
 import com.example.silverpear.enums.ErrorMessages;
 import com.example.silverpear.repository.PerfumeRepository;
 import com.example.silverpear.repository.ProductRepository;
-import com.example.silverpear.service.CacheService;
-import org.springframework.stereotype.Component;
-
 
 import org.springframework.stereotype.Service;
 
@@ -19,7 +16,9 @@ public class PerfumeService extends ProductService {
     private final PerfumeRepository perfumeRepository;
     private final CacheService cacheService;
     
-    public PerfumeService(ProductRepository productRepository, PerfumeRepository perfumeRepository, CacheService cacheService) {
+    public PerfumeService(ProductRepository productRepository,
+                          PerfumeRepository perfumeRepository,
+                          CacheService cacheService) {
         super(productRepository, cacheService);
         this.perfumeRepository = perfumeRepository;
         this.cacheService = cacheService;

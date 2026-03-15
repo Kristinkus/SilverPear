@@ -28,9 +28,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p WHERE p.salePrice > :lowPrice AND p.salePrice < :highPrice")
     List<Product> findInRange(@Param("lowPrice") double lowPrice, @Param("highPrice") double highPrice);
 
-    //@Query("SELECT p FROM Product p LEFT JOIN Cosmetics c ON p.id = c.id WHERE c.skin_type = :skinType")
-    //List<Product> findBySkinType(@Param("skinType") SkinType skinType);
-
 
     Page<Product> findBySalePrice(double lowPrice, double highPrice, Pageable pageable);
 

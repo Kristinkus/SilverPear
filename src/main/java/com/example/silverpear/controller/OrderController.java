@@ -29,6 +29,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -123,17 +124,6 @@ public class OrderController {
         List<Order> order = orderService.findByStatus(status);
         return ResponseEntity.ok(orderForUserMapper.toDtoList(order));
     }
-    /*
-    @GetMapping("/page-status")
-    public ResponseEntity<Page<OrderForUserDto>> getAllOrders(
-            @PageableDefault(size = 10, sort = "orderDate", direction = Sort.Direction.DESC)
-            Pageable pageable) {
-
-        Page<Order> ordersPage = orderService.getOrdersPage(pageable, 5, orderDate);
-        Page<OrderForUserDto> dtoPage = ordersPage.map(orderForUserMapper::toDto);
-        return ResponseEntity.ok(dtoPage);
-    }
-    */
 
     @GetMapping("/pageable")
     public ResponseEntity<Page<OrderForUserDto>> getAllOrders(
@@ -145,9 +135,34 @@ public class OrderController {
         return ResponseEntity.ok(dtoPage);
     }
 
+    @GetMapping("/jpql")
+    public ResponseEntity<List<OrderForUserDto>> getOrdersByFilters(
+            @RequestParam String brand,
+            @RequestParam(defaultValue = "0") Double minAmount) {
+
+        List<Order> orders = orderService.getOrdersByFilters(brand, minAmount);
+
+        List<OrderForUserDto> dtos = orders.stream()
+                .map(orderForUserMapper::toDto)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/native")
+    public ResponseEntity<List<OrderForUserDto>> getOrdersByFiltersNative(
+            @RequestParam String brand,
+            @RequestParam(defaultValue = "0") Double minAmount) {
+
+        List<Order> orders = orderService.getOrdersByFiltersNative(brand, minAmount);
+
+        List<OrderForUserDto> dtos = orders.stream()
+                .map(orderForUserMapper::toDto)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
+
+
 }
 
-/*
-    Поиск по вложенной сущности
-
- */

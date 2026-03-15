@@ -1,5 +1,6 @@
 package com.example.silverpear.service;
 
+import com.example.silverpear.cache.CacheKey;
 import com.example.silverpear.enums.ErrorMessages;
 import com.example.silverpear.enums.OrderStatus;
 import com.example.silverpear.product.entity.Order;
@@ -12,6 +13,7 @@ import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.repository.OrderRepository;
 import com.example.silverpear.repository.ProductRepository;
 import com.example.silverpear.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class OrderService {
 
@@ -31,16 +34,19 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final OrderForUserMapper orderForUserMapper;
+    private final CacheService cacheService;
 
     public OrderService(OrderRepository orderRepository,
                         UserRepository userRepository,
-                        ProductRepository productRepository, OrderForUserMapper orderForUserMapper) {
+                        ProductRepository productRepository,
+                        OrderForUserMapper orderForUserMapper,
+                        CacheService cacheService) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.orderForUserMapper = orderForUserMapper;
+        this.cacheService = cacheService;
     }
-
 
     public Order createOrderWithoutTransaction(Long userId, OrderRequest request) {
         User user = userRepository.findById(userId)
@@ -74,15 +80,19 @@ public class OrderService {
         }
 
         savedOrder.setTotalAmount(totalAmount);
-        return orderRepository.save(savedOrder);
-    }
+        Order created = orderRepository.save(savedOrder);
 
+        cacheService.evictByPattern("Order:findAll");
+        cacheService.evictByPattern("Order:findByStatus");
+        log.info("Cache invalidated after order creation");
+
+        return created;
+    }
 
     @Transactional
     public Order createOrderWithTransaction(Long userId, OrderRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-
 
         List<Product> products = new ArrayList<>();
         for (Long productId : request.getProductIds()) {
@@ -114,30 +124,80 @@ public class OrderService {
         }
 
         order.setTotalAmount(totalAmount);
-        return orderRepository.save(order);
+        Order created = orderRepository.save(order);
+
+        cacheService.evictByPattern("Order:findAll");
+        cacheService.evictByPattern("Order:findByStatus");
+        log.info("Cache invalidated after order creation with transaction");
+
+        return created;
     }
 
-
     public List<Order> findAllOrdersWithoutOptimization() {
-        return orderRepository.findAllOrdersWithoutOptimization();
+        CacheKey key = new CacheKey("Order", "findAllWithoutOptimization", "", 0, 0, "", "");
+
+        List<Order> cached = cacheService.get(key, List.class);
+        if (cached != null) {
+            log.info("Orders retrieved from cache");
+            return cached;
+        }
+
+        log.info("Orders not in cache");
+        List<Order> orders = orderRepository.findAllOrdersWithoutOptimization();
+        cacheService.put(key, orders);
+        log.info("Orders saved to cache");
+
+        return orders;
     }
 
     public List<Order> findAllOrdersWithItemsAndProducts() {
-        return orderRepository.findAllOrdersWithItemsAndProducts();
+        CacheKey key = new CacheKey("Order", "findAllOrdersWithItemsAndProducts", "", 0, 0, "", "");
+
+        List<Order> cached = cacheService.get(key, List.class);
+        if (cached != null) {
+            log.info("Orders with items retrieved from cache");
+            return cached;
+        }
+
+        log.info("Orders with items not in cache");
+        List<Order> orders = orderRepository.findAllOrdersWithItemsAndProducts();
+        cacheService.put(key, orders);
+        log.info("Orders with items saved to cache");
+
+        return orders;
     }
 
     public void deleteOrder(Long orderId) {
         orderRepository.deleteById(orderId);
+
+        CacheKey key = new CacheKey("Order", "findById", "id=" + orderId, 0, 0, "", "");
+        cacheService.evict(key);
+        cacheService.evictByPattern("Order:findAll");
+        cacheService.evictByPattern("Order:findByStatus");
+        log.info("Cache invalidated after order deletion: {}", orderId);
     }
 
     public Order findOrderById(Long orderId) {
-        return orderRepository.findById(orderId)
+        CacheKey key = new CacheKey("Order", "findById", "id=" + orderId, 0, 0, "", "");
+
+        Order cached = cacheService.get(key, Order.class);
+        if (cached != null) {
+            log.info("Order retrieved from cache: {}", orderId);
+            return cached;
+        }
+
+        log.info("Order not in cache: {}", orderId);
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException(ErrorMessages.ORDER_NOT_FOUND.withId(orderId)));
+
+        cacheService.put(key, order);
+        log.info("Order saved to cache: {}", orderId);
+
+        return order;
     }
 
     @Transactional
     public Order updateOrder(Long orderId, OrderRequest request) {
-
         Order existingOrder = findOrderById(orderId);
         existingOrder.getOrderItems().clear();
 
@@ -163,29 +223,131 @@ public class OrderService {
             totalAmount += product.getSalePrice() * quantity;
         }
         existingOrder.setTotalAmount(totalAmount);
-        return orderRepository.save(existingOrder);
+
+        Order updated = orderRepository.save(existingOrder);
+
+        CacheKey key = new CacheKey("Order", "findById", "id=" + orderId, 0, 0, "", "");
+        cacheService.put(key, updated);
+        cacheService.evictByPattern("Order:findAll");
+        cacheService.evictByPattern("Order:findByStatus");
+        log.info("Cache updated after order update: {}", orderId);
+
+        return updated;
     }
 
     @Transactional
     public Order updateOrderStatus(Long orderId, OrderStatus status) {
         Order order = findOrderById(orderId);
         order.setStatus(status);
-        return order;
+
+        Order updated = orderRepository.save(order);
+
+        CacheKey key = new CacheKey("Order", "findById", "id=" + orderId, 0, 0, "", "");
+        cacheService.put(key, updated);
+        cacheService.evictByPattern("Order:findAll");
+        cacheService.evictByPattern("Order:findByStatus");
+        log.info("Cache updated after status change: {}", orderId);
+
+        return updated;
     }
 
-
     public List<Order> findByStatus(OrderStatus status) {
-        return orderRepository.findOrderByStatus(status);
+        CacheKey key = new CacheKey("Order", "findByStatus", "status=" + status, 0, 0, "", "");
+
+        List<Order> cached = cacheService.get(key, List.class);
+        if (cached != null) {
+            log.info("Orders by status {} retrieved from cache", status);
+            return cached;
+        }
+
+        log.info("Orders by status {} not in cache", status);
+        List<Order> orders = orderRepository.findOrderByStatus(status);
+        cacheService.put(key, orders);
+        log.info("Orders by status {} saved to cache", status);
+
+        return orders;
     }
 
     public Page<OrderForUserDto> getOrdersPage(int page, int size, String sortBy) {
+        CacheKey key = new CacheKey("Order", "getOrdersPage", "", page, size, sortBy, "desc");
+
+        Page<OrderForUserDto> cached = cacheService.get(key, Page.class);
+        if (cached != null) {
+            log.info("Orders page {} retrieved from cache", page);
+            return cached;
+        }
+
+        log.info("Orders page {} not in cache", page);
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).descending());
         Page<Order> orders = orderRepository.findAll(pageable);
-        return orders.map(orderForUserMapper::toDto);
+        Page<OrderForUserDto> dtoPage = orders.map(orderForUserMapper::toDto);
+
+        cacheService.put(key, dtoPage);
+        log.info("Orders page {} saved to cache", page);
+
+        return dtoPage;
     }
 
     public Page<Order> getOrdersPage(Pageable pageable) {
-        return orderRepository.findAll(pageable);
+        CacheKey key = new CacheKey(
+                "Order",
+                "getOrdersPage",
+                "",
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getSort().iterator().next().getProperty(),
+                pageable.getSort().iterator().next().getDirection().name().toLowerCase()
+        );
+
+        Page<Order> cached = cacheService.get(key, Page.class);
+        if (cached != null) {
+            log.info("Orders page {} retrieved from cache", pageable.getPageNumber());
+            return cached;
+        }
+
+        log.info("Orders page {} not in cache", pageable.getPageNumber());
+        Page<Order> orders = orderRepository.findAll(pageable);
+        cacheService.put(key, orders);
+        log.info("Orders page {} saved to cache", pageable.getPageNumber());
+
+        return orders;
+    }
+
+    public List<Order> getOrdersByFilters(String brand, Double minAmount) {
+        CacheKey key = new CacheKey("Order", "getOrdersByFilters",
+                "brand=" + brand + "|minAmount=" + minAmount,
+                0, 0, "", "");
+
+        List<Order> cached = cacheService.get(key, List.class);
+        if (cached != null) {
+            log.info("Filtered orders retrieved from cache");
+            return cached;
+        }
+
+        log.info("Filtered orders not in cache");
+        List<Order> orders = orderRepository.findOrdersByBrandAndStatusAndMinAmount(brand, minAmount);
+        cacheService.put(key, orders);
+        log.info("Filtered orders saved to cache");
+
+        return orders;
+    }
+
+    public List<Order> getOrdersByFiltersNative(String brand, Double minAmount) {
+        CacheKey key = new CacheKey("Order", "getOrdersByFiltersNative",
+                "brand=" + brand + "|minAmount=" + minAmount,
+                0, 0, "", "");
+
+        List<Order> cached = cacheService.get(key, List.class);
+        if (cached != null) {
+            log.info("Filtered orders (native) retrieved from cache");
+            return cached;
+        }
+
+        log.info("Filtered orders (native) not in cache");
+        List<Order> orders = orderRepository.findOrdersByBrandAndStatusAndMinAmountNative(brand, minAmount);
+        cacheService.put(key, orders);
+        log.info("Filtered orders (native) saved to cache");
+
+        return orders;
     }
 }
-

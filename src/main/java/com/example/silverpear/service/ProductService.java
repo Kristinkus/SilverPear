@@ -4,7 +4,6 @@ import com.example.silverpear.enums.Gender;
 import com.example.silverpear.cache.CacheKey;
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.repository.ProductRepository;
-
 import com.example.silverpear.enums.ErrorMessages;
 
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
-
 @Service
 @Slf4j
 public class ProductService {
@@ -31,31 +28,26 @@ public class ProductService {
         this.productRepository = productRepository;
         this.cacheService = cacheService;
     }
+
     public List<Product> findAll() {
-        // Для списка без пагинации - page и size = 0
         CacheKey key = new CacheKey(
                 "Product",
                 "findAll",
                 "",
-                0,  // page = 0
-                0,  // size = 0 (означает "без пагинации")
+                0, 0,
                 "id",
                 "asc"
         );
 
-        // Проверяем кэш
         List<Product> cached = cacheService.get(key, List.class);
         if (cached != null) {
             return cached;
         }
 
         List<Product> products = productRepository.findAll();
-
         cacheService.put(key, products);
-
         return products;
     }
-
 
     public Page<Product> findAll(Pageable pageable) {
         CacheKey key = new CacheKey(
@@ -78,7 +70,6 @@ public class ProductService {
         return products;
     }
 
-
     public List<Product> findByBrand(String brand) {
         return productRepository.findByBrand(brand);
     }
@@ -97,16 +88,16 @@ public class ProductService {
 
         Product cached = cacheService.get(key, Product.class);
         if (cached != null) {
-            log.info("Продукт получен из кэша {}", id);
-            return cached;  // Мгновенно из памяти!
+            log.info("Product retrieved from cache: {}", id);
+            return cached;
         }
 
-        log.info("Продукта нет в кэше", id);
+        log.info("Product not in cache: {}", id);
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(ErrorMessages.PRODUCT_NOT_FOUND.withId(id)));
 
         cacheService.put(key, product);
-        log.info("Сохранен в кэш", id);
+        log.info("Product saved to cache: {}", id);
 
         return product;
     }
@@ -116,7 +107,12 @@ public class ProductService {
     }
 
     public Product create(Product product) {
-        return productRepository.save(product);
+        Product saved = productRepository.save(product);
+
+        cacheService.evictByPattern("Product:findAll");
+        log.info("Cache invalidated after product creation");
+
+        return saved;
     }
 
     public List<Product> searchProducts(String name, String brand, String category) {
@@ -135,6 +131,11 @@ public class ProductService {
 
     public void deleteById(Long id) {
         productRepository.deleteById(id);
+
+        CacheKey key = new CacheKey("Product", "findById", "id=" + id, 0, 0, "", "");
+        cacheService.evict(key);
+        cacheService.evictByPattern("Product:findAll");
+        log.info("Cache invalidated after product deletion: {}", id);
     }
 
     public Product update(Long id, Product product) {
@@ -143,7 +144,17 @@ public class ProductService {
 
         updateBaseFields(existingProduct, product);
 
-        return productRepository.save(existingProduct);
+        Product updated = productRepository.save(existingProduct);
+
+        CacheKey productKey = new CacheKey("Product", "findById", "id=" + id, 0, 0, "", "");
+        cacheService.put(productKey, updated);
+        log.info("Updated product saved to cache: {}", id);
+
+        cacheService.evictByPattern("Product:findAll");
+        cacheService.evictByPattern("Product:findByCategory");
+        log.info("Cache invalidated after product update: {}", id);
+
+        return updated;
     }
 
     protected void updateBaseFields(Product existing, Product source) {
@@ -151,9 +162,7 @@ public class ProductService {
         existing.setBrand(source.getBrand());
         existing.setDescription(source.getDescription());
         existing.setCategory(source.getCategory());
-
         existing.setSalePrice(source.getSalePrice());
-
         existing.setInStock(source.isInStock());
         existing.setType(source.getType());
         existing.setGender(source.getGender());
@@ -167,7 +176,7 @@ public class ProductService {
 
         updates.forEach((key, value) -> {
             if (value == null) {
-                return; // пропускаем null значения
+                return;
             }
 
             switch (key) {
@@ -203,19 +212,21 @@ public class ProductService {
             }
         });
 
-        return existingProduct;
+        Product updated = productRepository.save(existingProduct);
+
+        CacheKey productKey = new CacheKey("Product", "findById", "id=" + id, 0, 0, "", "");
+        cacheService.put(productKey, updated);
+        log.info("Patched product saved to cache: {}", id);
+
+        cacheService.evictByPattern("Product:findAll");
+        cacheService.evictByPattern("Product:findByCategory");
+        log.info("Cache invalidated after product patch update: {}", id);
+
+        return updated;
     }
-
-
     public List<Product> searchInRange(Double lowPrice, Double highPrice) {
         return productRepository.findInRange(lowPrice, highPrice);
     }
-
-    //public List<Product> findBySkinType(SkinType skinType) {
-    //    return productRepository.findBySkinType(skinType);
-    //}
-
-
 
 
 }

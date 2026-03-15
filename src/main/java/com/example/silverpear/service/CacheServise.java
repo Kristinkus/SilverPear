@@ -53,4 +53,18 @@ class CacheService {
         stats.put("misses", misses);
         return stats;
     }
+
+    public void evict(CacheKey key) {
+        if (cache.containsKey(key)) {
+            cache.remove(key);
+            log.info("Cache evicted: {} - {}", key.getEntityType(), key);
+        }
+    }
+
+    public void evictByPattern(String pattern) {
+        int beforeSize = cache.size();
+        cache.keySet().removeIf(key -> key.toString().contains(pattern));
+        int removed = beforeSize - cache.size();
+        log.info("Cache evicted by pattern '{}': {} entries removed", pattern, removed);
+    }
 }
