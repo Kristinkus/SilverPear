@@ -1,30 +1,83 @@
 package com.example.silverpear.service;
 
 import com.example.silverpear.enums.Gender;
-
+import com.example.silverpear.cache.CacheKey;
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.repository.ProductRepository;
+
+import com.example.silverpear.enums.ErrorMessages;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
-import com.example.silverpear.enums.ErrorMessages;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Service
 
+
+@Service
+@Slf4j
 public class ProductService {
 
     protected final ProductRepository productRepository;
+    protected final CacheService cacheService;
 
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(ProductRepository productRepository, CacheService cacheService) {
         this.productRepository = productRepository;
+        this.cacheService = cacheService;
     }
     public List<Product> findAll() {
-        return productRepository.findAll();
+        // Для списка без пагинации - page и size = 0
+        CacheKey key = new CacheKey(
+                "Product",
+                "findAll",
+                "",
+                0,  // page = 0
+                0,  // size = 0 (означает "без пагинации")
+                "id",
+                "asc"
+        );
+
+        // Проверяем кэш
+        List<Product> cached = cacheService.get(key, List.class);
+        if (cached != null) {
+            return cached;
+        }
+
+        List<Product> products = productRepository.findAll();
+
+        cacheService.put(key, products);
+
+        return products;
     }
+
+
+    public Page<Product> findAll(Pageable pageable) {
+        CacheKey key = new CacheKey(
+                "Product",
+                "findAll",
+                "",
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                "id",
+                "asc"
+        );
+
+        Page<Product> cached = cacheService.get(key, Page.class);
+        if (cached != null) {
+            return cached;
+        }
+
+        Page<Product> products = productRepository.findAll(pageable);
+        cacheService.put(key, products);
+        return products;
+    }
+
 
     public List<Product> findByBrand(String brand) {
         return productRepository.findByBrand(brand);
@@ -35,8 +88,27 @@ public class ProductService {
     }
 
     public Product findById(Long id) {
-        return productRepository.findById(id)
+        CacheKey key = new CacheKey(
+                "Product",
+                "findById",
+                "id=" + id,
+                0, 0, "", ""
+        );
+
+        Product cached = cacheService.get(key, Product.class);
+        if (cached != null) {
+            log.info("Продукт получен из кэша {}", id);
+            return cached;  // Мгновенно из памяти!
+        }
+
+        log.info("Продукта нет в кэше", id);
+        Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(ErrorMessages.PRODUCT_NOT_FOUND.withId(id)));
+
+        cacheService.put(key, product);
+        log.info("Сохранен в кэш", id);
+
+        return product;
     }
 
     public List<Product> findByName(String name) {
@@ -143,9 +215,7 @@ public class ProductService {
     //    return productRepository.findBySkinType(skinType);
     //}
 
-    public Page<Product> findAll(Pageable pageable) {
-        return productRepository.findAll(pageable);
-    }
+
 
 
 }

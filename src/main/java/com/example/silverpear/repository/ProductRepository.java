@@ -23,6 +23,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     public  List<Product> findByBrand(String brand);
 
     public List<Product> findAll();
+    public Page<Product> findAll(Pageable pageable);
 
     @Query("SELECT p FROM Product p WHERE p.salePrice > :lowPrice AND p.salePrice < :highPrice")
     List<Product> findInRange(@Param("lowPrice") double lowPrice, @Param("highPrice") double highPrice);
