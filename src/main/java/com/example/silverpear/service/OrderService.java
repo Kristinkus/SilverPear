@@ -30,6 +30,12 @@ import java.util.UUID;
 @Service
 public class OrderService {
 
+    private static final String CACHE_ENTITY_ORDER = "Order";
+    private static final String CACHE_KEY_FIND_ALL = CACHE_ENTITY_ORDER + ":findAll";
+    private static final String CACHE_KEY_FIND_BY_STATUS = CACHE_ENTITY_ORDER + ":findByStatus";
+    private static final String CACHE_KEY_FIND_BY_ID = CACHE_ENTITY_ORDER + ":findById";
+    private static final String CACHE_METHOD_FIND_BY_ID = "findById";
+
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
@@ -82,8 +88,8 @@ public class OrderService {
         savedOrder.setTotalAmount(totalAmount);
         Order created = orderRepository.save(savedOrder);
 
-        cacheService.evictByPattern("Order:findAll");
-        cacheService.evictByPattern("Order:findByStatus");
+        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);
+        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);
         log.info("Cache invalidated after order creation");
 
         return created;
@@ -126,15 +132,15 @@ public class OrderService {
         order.setTotalAmount(totalAmount);
         Order created = orderRepository.save(order);
 
-        cacheService.evictByPattern("Order:findAll");
-        cacheService.evictByPattern("Order:findByStatus");
+        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);
+        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);
         log.info("Cache invalidated after order creation with transaction");
 
         return created;
     }
 
     public List<Order> findAllOrdersWithoutOptimization() {
-        CacheKey key = new CacheKey("Order", "findAllWithoutOptimization", "", 0, 0, "", "");
+        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, "findAllWithoutOptimization", "", 0, 0, "", "");
 
         List<Order> cached = cacheService.get(key);
         if (cached != null) {
@@ -151,7 +157,7 @@ public class OrderService {
     }
 
     public List<Order> findAllOrdersWithItemsAndProducts() {
-        CacheKey key = new CacheKey("Order", "findAllOrdersWithItemsAndProducts", "", 0, 0, "", "");
+        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, "findAllOrdersWithItemsAndProducts", "", 0, 0, "", "");
 
         List<Order> cached = cacheService.get(key);
         if (cached != null) {
@@ -170,15 +176,15 @@ public class OrderService {
     public void deleteOrder(Long orderId) {
         orderRepository.deleteById(orderId);
 
-        CacheKey key = new CacheKey("Order", "findById", "id=" + orderId, 0, 0, "", "");
+        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, CACHE_METHOD_FIND_BY_ID, "id=" + orderId, 0, 0, "", "");
         cacheService.evict(key);
-        cacheService.evictByPattern("Order:findAll");
-        cacheService.evictByPattern("Order:findByStatus");
+        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);
+        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);
         log.info("Cache invalidated after order deletion: {}", orderId);
     }
 
     public Order findOrderById(Long orderId) {
-        CacheKey key = new CacheKey("Order", "findById", "id=" + orderId, 0, 0, "", "");
+        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, CACHE_METHOD_FIND_BY_ID, "id=" + orderId, 0, 0, "", "");
 
         Order cached = cacheService.get(key);
         if (cached != null) {
@@ -226,10 +232,10 @@ public class OrderService {
 
         Order updated = orderRepository.save(existingOrder);
 
-        CacheKey key = new CacheKey("Order", "findById", "id=" + orderId, 0, 0, "", "");
+        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, CACHE_METHOD_FIND_BY_ID, "id=" + orderId, 0, 0, "", "");
         cacheService.put(key, updated);
-        cacheService.evictByPattern("Order:findAll");
-        cacheService.evictByPattern("Order:findByStatus");
+        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);
+        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);
         log.info("Cache updated after order update: {}", orderId);
 
         return updated;
@@ -242,17 +248,17 @@ public class OrderService {
 
         Order updated = orderRepository.save(order);
 
-        CacheKey key = new CacheKey("Order", "findById", "id=" + orderId, 0, 0, "", "");
+        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, CACHE_METHOD_FIND_BY_ID, "id=" + orderId, 0, 0, "", "");
         cacheService.put(key, updated);
-        cacheService.evictByPattern("Order:findAll");
-        cacheService.evictByPattern("Order:findByStatus");
+        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);
+        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);
         log.info("Cache updated after status change: {}", orderId);
 
         return updated;
     }
 
     public List<Order> findByStatus(OrderStatus status) {
-        CacheKey key = new CacheKey("Order", "findByStatus", "status=" + status, 0, 0, "", "");
+        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, "findByStatus", "status=" + status, 0, 0, "", "");
 
         List<Order> cached = cacheService.get(key);
         if (cached != null) {
@@ -269,7 +275,7 @@ public class OrderService {
     }
 
     public Page<OrderForUserDto> getOrdersPage(int page, int size, String sortBy) {
-        CacheKey key = new CacheKey("Order", "getOrdersPage", "", page, size, sortBy, "desc");
+        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, "getOrdersPage", "", page, size, sortBy, "desc");
 
         Page<OrderForUserDto> cached = cacheService.get(key);
         if (cached != null) {
@@ -290,7 +296,7 @@ public class OrderService {
 
     public Page<Order> getOrdersPage(Pageable pageable) {
         CacheKey key = new CacheKey(
-                "Order",
+                CACHE_ENTITY_ORDER,
                 "getOrdersPage",
                 "",
                 pageable.getPageNumber(),
@@ -314,7 +320,7 @@ public class OrderService {
     }
 
     public List<Order> getOrdersByFilters(String brand, Double minAmount) {
-        CacheKey key = new CacheKey("Order", "getOrdersByFilters",
+        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, "getOrdersByFilters",
                 "brand=" + brand + "|minAmount=" + minAmount,
                 0, 0, "", "");
 
@@ -333,7 +339,7 @@ public class OrderService {
     }
 
     public List<Order> getOrdersByFiltersNative(String brand, Double minAmount) {
-        CacheKey key = new CacheKey("Order", "getOrdersByFiltersNative",
+        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, "getOrdersByFiltersNative",
                 "brand=" + brand + "|minAmount=" + minAmount,
                 0, 0, "", "");
 

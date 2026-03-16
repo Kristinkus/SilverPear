@@ -21,6 +21,11 @@ import java.util.Map;
 @Slf4j
 public class ProductService {
 
+    private static final String CACHE_ENTITY_PRODUCT = "Product";
+    private static final String CACHE_KEY_FIND_ALL = CACHE_ENTITY_PRODUCT + ":findAll";
+    private static final String CACHE_KEY_FIND_BY_CATEGORY = CACHE_ENTITY_PRODUCT + ":findByCategory";
+    private static final String CACHE_METHOD_FIND_BY_ID = "findById";
+
     protected final ProductRepository productRepository;
     protected final CacheService cacheService;
 
@@ -31,7 +36,7 @@ public class ProductService {
 
     public List<Product> findAll() {
         CacheKey key = new CacheKey(
-                "Product",
+                CACHE_ENTITY_PRODUCT,
                 "findAll",
                 "",
                 0, 0,
@@ -51,7 +56,7 @@ public class ProductService {
 
     public Page<Product> findAll(Pageable pageable) {
         CacheKey key = new CacheKey(
-                "Product",
+                CACHE_ENTITY_PRODUCT,
                 "findAll",
                 "",
                 pageable.getPageNumber(),
@@ -80,8 +85,8 @@ public class ProductService {
 
     public Product findById(Long id) {
         CacheKey key = new CacheKey(
-                "Product",
-                "findById",
+                CACHE_ENTITY_PRODUCT,
+                CACHE_METHOD_FIND_BY_ID,
                 "id=" + id,
                 0, 0, "", ""
         );
@@ -109,7 +114,7 @@ public class ProductService {
     public Product create(Product product) {
         Product saved = productRepository.save(product);
 
-        cacheService.evictByPattern("Product:findAll");
+        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);
         log.info("Cache invalidated after product creation");
 
         return saved;
@@ -132,9 +137,9 @@ public class ProductService {
     public void deleteById(Long id) {
         productRepository.deleteById(id);
 
-        CacheKey key = new CacheKey("Product", "findById", "id=" + id, 0, 0, "", "");
+        CacheKey key = new CacheKey(CACHE_ENTITY_PRODUCT, CACHE_METHOD_FIND_BY_ID, "id=" + id, 0, 0, "", "");
         cacheService.evict(key);
-        cacheService.evictByPattern("Product:findAll");
+        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);
         log.info("Cache invalidated after product deletion: {}", id);
     }
 
@@ -146,12 +151,12 @@ public class ProductService {
 
         Product updated = productRepository.save(existingProduct);
 
-        CacheKey productKey = new CacheKey("Product", "findById", "id=" + id, 0, 0, "", "");
+        CacheKey productKey = new CacheKey(CACHE_ENTITY_PRODUCT, CACHE_METHOD_FIND_BY_ID, "id=" + id, 0, 0, "", "");
         cacheService.put(productKey, updated);
         log.info("Updated product saved to cache: {}", id);
 
-        cacheService.evictByPattern("Product:findAll");
-        cacheService.evictByPattern("Product:findByCategory");
+        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);
+        cacheService.evictByPattern(CACHE_KEY_FIND_BY_CATEGORY);
         log.info("Cache invalidated after product update: {}", id);
 
         return updated;
@@ -214,12 +219,12 @@ public class ProductService {
 
         Product updated = productRepository.save(existingProduct);
 
-        CacheKey productKey = new CacheKey("Product", "findById", "id=" + id, 0, 0, "", "");
+        CacheKey productKey = new CacheKey(CACHE_ENTITY_PRODUCT, CACHE_METHOD_FIND_BY_ID, "id=" + id, 0, 0, "", "");
         cacheService.put(productKey, updated);
         log.info("Patched product saved to cache: {}", id);
 
-        cacheService.evictByPattern("Product:findAll");
-        cacheService.evictByPattern("Product:findByCategory");
+        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);
+        cacheService.evictByPattern(CACHE_KEY_FIND_BY_CATEGORY);
         log.info("Cache invalidated after product patch update: {}", id);
 
         return updated;
@@ -227,6 +232,4 @@ public class ProductService {
     public List<Product> searchInRange(Double lowPrice, Double highPrice) {
         return productRepository.findInRange(lowPrice, highPrice);
     }
-
-
 }
