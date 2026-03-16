@@ -8,16 +8,16 @@ import com.example.silverpear.product.entity.OrderItem;
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.product.entity.User;
 import com.example.silverpear.product.mapper.OrderForUserMapper;
-import com.example.silverpear.product.productdto.OrderForUserDto;
+
 import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.repository.OrderRepository;
 import com.example.silverpear.repository.ProductRepository;
 import com.example.silverpear.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,47 +52,6 @@ public class OrderService {
         this.productRepository = productRepository;
         this.orderForUserMapper = orderForUserMapper;
         this.cacheService = cacheService;
-    }
-
-    public Order createOrderWithoutTransaction(Long userId, OrderRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-
-        Order order = new Order();
-        order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8));
-        order.setOrderDate(LocalDateTime.now());
-        order.setStatus(OrderStatus.NEW);
-        order.setUser(user);
-
-        Order savedOrder = orderRepository.save(order);
-
-        double totalAmount = 0.0;
-
-        for (int i = 0; i < request.getProductIds().size(); i++) {
-            Long productId = request.getProductIds().get(i);
-            Integer quantity = request.getQuantities().get(i);
-
-            Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new RuntimeException("Some products not found - order already saved!"));
-
-            OrderItem item = new OrderItem();
-            item.setQuantity(quantity);
-            item.setPriceAtTime(product.getSalePrice());
-            item.setProduct(product);
-            item.setOrder(savedOrder);
-
-            savedOrder.addOrderItem(item);
-            totalAmount += product.getSalePrice() * quantity;
-        }
-
-        savedOrder.setTotalAmount(totalAmount);
-        Order created = orderRepository.save(savedOrder);
-
-        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);
-        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);
-        log.info("Cache invalidated after order creation");
-
-        return created;
     }
 
     @Transactional
@@ -137,23 +96,6 @@ public class OrderService {
         log.info("Cache invalidated after order creation with transaction");
 
         return created;
-    }
-
-    public List<Order> findAllOrdersWithoutOptimization() {
-        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, "findAllWithoutOptimization", "", 0, 0, "", "");
-
-        List<Order> cached = cacheService.get(key);
-        if (cached != null) {
-            log.info("Orders retrieved from cache");
-            return cached;
-        }
-
-        log.info("Orders not in cache");
-        List<Order> orders = orderRepository.findAllOrdersWithoutOptimization();
-        cacheService.put(key, orders);
-        log.info("Orders saved to cache");
-
-        return orders;
     }
 
     public List<Order> findAllOrdersWithItemsAndProducts() {
@@ -272,26 +214,6 @@ public class OrderService {
         log.info("Orders by status {} saved to cache", status);
 
         return orders;
-    }
-
-    public Page<OrderForUserDto> getOrdersPage(int page, int size, String sortBy) {
-        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, "getOrdersPage", "", page, size, sortBy, "desc");
-
-        Page<OrderForUserDto> cached = cacheService.get(key);
-        if (cached != null) {
-            log.info("Orders page {} retrieved from cache", page);
-            return cached;
-        }
-
-        log.info("Orders page {} not in cache", page);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).descending());
-        Page<Order> orders = orderRepository.findAll(pageable);
-        Page<OrderForUserDto> dtoPage = orders.map(orderForUserMapper::toDto);
-
-        cacheService.put(key, dtoPage);
-        log.info("Orders page {} saved to cache", page);
-
-        return dtoPage;
     }
 
     public Page<Order> getOrdersPage(Pageable pageable) {
