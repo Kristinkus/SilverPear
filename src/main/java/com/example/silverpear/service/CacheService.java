@@ -18,7 +18,7 @@ class CacheService {
     private int misses = 0;
 
     @SuppressWarnings("unchecked")
-    public <T> T get(CacheKey key, Class<T> type) {
+    public <T> T get(CacheKey key) {
         if (cache.containsKey(key)) {
             hits++;
             log.info("Получено из кэша", key.getEntityType(), key);

@@ -13,14 +13,12 @@ import java.util.List;
 public class CosmeticsService extends ProductService {
 
     private final CosmeticsRepository cosmeticsRepository;
-    private final CacheService cacheService;
 
     public CosmeticsService(ProductRepository productRepository,
                             CosmeticsRepository cosmeticsRepository,
                             CacheService cacheService) {
         super(productRepository, cacheService);
         this.cosmeticsRepository = cosmeticsRepository;
-        this.cacheService = cacheService;
     }
 
     public Cosmetics create(Cosmetics cosmetics) {

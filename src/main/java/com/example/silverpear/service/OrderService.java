@@ -136,7 +136,7 @@ public class OrderService {
     public List<Order> findAllOrdersWithoutOptimization() {
         CacheKey key = new CacheKey("Order", "findAllWithoutOptimization", "", 0, 0, "", "");
 
-        List<Order> cached = cacheService.get(key, List.class);
+        List<Order> cached = cacheService.get(key);
         if (cached != null) {
             log.info("Orders retrieved from cache");
             return cached;
@@ -153,7 +153,7 @@ public class OrderService {
     public List<Order> findAllOrdersWithItemsAndProducts() {
         CacheKey key = new CacheKey("Order", "findAllOrdersWithItemsAndProducts", "", 0, 0, "", "");
 
-        List<Order> cached = cacheService.get(key, List.class);
+        List<Order> cached = cacheService.get(key);
         if (cached != null) {
             log.info("Orders with items retrieved from cache");
             return cached;
@@ -180,7 +180,7 @@ public class OrderService {
     public Order findOrderById(Long orderId) {
         CacheKey key = new CacheKey("Order", "findById", "id=" + orderId, 0, 0, "", "");
 
-        Order cached = cacheService.get(key, Order.class);
+        Order cached = cacheService.get(key);
         if (cached != null) {
             log.info("Order retrieved from cache: {}", orderId);
             return cached;
@@ -254,7 +254,7 @@ public class OrderService {
     public List<Order> findByStatus(OrderStatus status) {
         CacheKey key = new CacheKey("Order", "findByStatus", "status=" + status, 0, 0, "", "");
 
-        List<Order> cached = cacheService.get(key, List.class);
+        List<Order> cached = cacheService.get(key);
         if (cached != null) {
             log.info("Orders by status {} retrieved from cache", status);
             return cached;
@@ -271,7 +271,7 @@ public class OrderService {
     public Page<OrderForUserDto> getOrdersPage(int page, int size, String sortBy) {
         CacheKey key = new CacheKey("Order", "getOrdersPage", "", page, size, sortBy, "desc");
 
-        Page<OrderForUserDto> cached = cacheService.get(key, Page.class);
+        Page<OrderForUserDto> cached = cacheService.get(key);
         if (cached != null) {
             log.info("Orders page {} retrieved from cache", page);
             return cached;
@@ -299,7 +299,7 @@ public class OrderService {
                 pageable.getSort().iterator().next().getDirection().name().toLowerCase()
         );
 
-        Page<Order> cached = cacheService.get(key, Page.class);
+        Page<Order> cached = cacheService.get(key);
         if (cached != null) {
             log.info("Orders page {} retrieved from cache", pageable.getPageNumber());
             return cached;
@@ -318,7 +318,7 @@ public class OrderService {
                 "brand=" + brand + "|minAmount=" + minAmount,
                 0, 0, "", "");
 
-        List<Order> cached = cacheService.get(key, List.class);
+        List<Order> cached = cacheService.get(key);
         if (cached != null) {
             log.info("Filtered orders retrieved from cache");
             return cached;
@@ -337,7 +337,7 @@ public class OrderService {
                 "brand=" + brand + "|minAmount=" + minAmount,
                 0, 0, "", "");
 
-        List<Order> cached = cacheService.get(key, List.class);
+        List<Order> cached = cacheService.get(key);
         if (cached != null) {
             log.info("Filtered orders (native) retrieved from cache");
             return cached;

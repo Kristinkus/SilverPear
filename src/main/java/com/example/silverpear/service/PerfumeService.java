@@ -14,14 +14,14 @@ import java.util.List;
 public class PerfumeService extends ProductService {
 
     private final PerfumeRepository perfumeRepository;
-    private final CacheService cacheService;
+
     
     public PerfumeService(ProductRepository productRepository,
                           PerfumeRepository perfumeRepository,
                           CacheService cacheService) {
         super(productRepository, cacheService);
         this.perfumeRepository = perfumeRepository;
-        this.cacheService = cacheService;
+
     }
 
     public Perfume create(Perfume perfume) {

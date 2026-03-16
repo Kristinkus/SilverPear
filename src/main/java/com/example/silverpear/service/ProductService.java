@@ -39,7 +39,7 @@ public class ProductService {
                 "asc"
         );
 
-        List<Product> cached = cacheService.get(key, List.class);
+        List<Product> cached = cacheService.get(key);
         if (cached != null) {
             return cached;
         }
@@ -60,7 +60,7 @@ public class ProductService {
                 "asc"
         );
 
-        Page<Product> cached = cacheService.get(key, Page.class);
+        Page<Product> cached = cacheService.get(key);
         if (cached != null) {
             return cached;
         }
@@ -86,7 +86,7 @@ public class ProductService {
                 0, 0, "", ""
         );
 
-        Product cached = cacheService.get(key, Product.class);
+        Product cached = cacheService.get(key);
         if (cached != null) {
             log.info("Product retrieved from cache: {}", id);
             return cached;

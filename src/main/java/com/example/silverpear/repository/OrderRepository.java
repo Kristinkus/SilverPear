@@ -29,12 +29,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o FROM Order o LEFT JOIN FETCH OrderItem oi ON o.id = oi.id WHERE o.status = :status ")
     List<Order> findOrderByStatus(@Param("status") OrderStatus status);
 
-    @Query(value = "SELECT\n" +
-                   "    o.*,\n" +
-                   "    oi.*\n" +
-                   "FROM orders o\n" +
-                   "LEFT JOIN order_items oi ON o.id = oi.order_id\n" +
-                   "WHERE o.status = :status\n",
+    @Query(value = """
+               SELECT
+                   o.*,
+                   oi.*
+               FROM orders o
+               LEFT JOIN order_items oi ON o.id = oi.order_id
+               WHERE o.status = :status
+               """,
             nativeQuery = true)
     List<Order> findOrdersWithItemsByStatusNative(@Param("status") String status);
 
