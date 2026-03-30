@@ -21,8 +21,12 @@ public class LoggingAspect {
         try {
             return joinPoint.proceed();
         } finally {
-            long executionTime = System.currentTimeMillis() - start;
-            logger.info("время выполнения: {} мс | {}", executionTime, joinPoint.getSignature().toShortString());
+            if (logger.isInfoEnabled()) {
+                long executionTime = System.currentTimeMillis() - start;
+                logger.info("время выполнения: {} мс | {}",
+                        executionTime,
+                        joinPoint.getSignature().toShortString());
+            }
         }
     }
 }

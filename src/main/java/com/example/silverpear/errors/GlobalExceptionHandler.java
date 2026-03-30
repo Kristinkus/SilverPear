@@ -23,7 +23,6 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -35,8 +34,10 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
         int code = ex.getStatusCode().value();
         HttpStatus resolved = HttpStatus.resolve(code);
-        String reason = ex.getReason() != null ? ex.getReason()
-                : (resolved != null ? resolved.getReasonPhrase() : "Ошибка");
+        String reason = ex.getReason();
+        if (reason == null) {
+            reason = resolved != null ? resolved.getReasonPhrase() : "Ошибка";
+        }
         ErrorResponse body = build(code, reason, List.of(reason), request);
         return ResponseEntity.status(ex.getStatusCode()).body(body);
     }
@@ -159,12 +160,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(
             HttpRequestMethodNotSupportedException ex,
             HttpServletRequest request) {
-        String detail = ex.getSupportedHttpMethods() != null && !ex.getSupportedHttpMethods().isEmpty()
-                ? "Допустимые методы: " + String.join(", ",
-                ex.getSupportedHttpMethods().stream()
-                        .map(HttpMethod::name)
-                        .collect(Collectors.toList()))
-                : (ex.getMessage() != null ? ex.getMessage() : "");
+        String detail;
+        if (ex.getSupportedHttpMethods() != null && !ex.getSupportedHttpMethods().isEmpty()) {
+            detail = "Допустимые методы: " + String.join(", ",
+                    ex.getSupportedHttpMethods().stream()
+                            .map(HttpMethod::name)
+                            .toList());
+        } else {
+            detail = ex.getMessage() != null ? ex.getMessage() : "";
+        }
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(build(
                 HttpStatus.METHOD_NOT_ALLOWED,
                 "Метод не поддерживается",
