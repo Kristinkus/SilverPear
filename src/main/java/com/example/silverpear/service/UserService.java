@@ -36,6 +36,14 @@ public class UserService {
     }
 
     public UserResponse createUser(UserRequest request) {
+        if (userRepository.existsByLogin(request.getLogin())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Пользователь с логином «" + request.getLogin() + "» уже существует");
+        }
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Пользователь с email «" + request.getEmail() + "» уже зарегистрирован");
+        }
         User user = userMapper.toEntity(request);
         User saved = userRepository.save(user);
         return userMapper.toResponse(saved);
@@ -44,6 +52,14 @@ public class UserService {
     public UserResponse updateUser(Long id, UserRequest request) {
         if (!userRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id);
+        }
+        if (userRepository.existsByLoginAndIdNot(request.getLogin(), id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Логин «" + request.getLogin() + "» уже занят другим пользователем");
+        }
+        if (userRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Email «" + request.getEmail() + "» уже используется другим пользователем");
         }
         User user = userMapper.toEntity(request);
         user.setId(id);
