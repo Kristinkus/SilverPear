@@ -9,10 +9,10 @@ import org.springframework.stereotype.Component;
 
 @Aspect
 @Component
-<span class="nc" id="L12">public class LoggingAspect {</span>
+<span class="fc" id="L12">public class LoggingAspect {</span>
 
     private static final String LOG_NAME = &quot;com.example.silverpear.service.performance&quot;;
-<span class="nc" id="L15">    private final Logger logger = LoggerFactory.getLogger(LOG_NAME);</span>
+<span class="fc" id="L15">    private final Logger logger = LoggerFactory.getLogger(LOG_NAME);</span>
 
     @Around(&quot;execution(* com.example.silverpear.service..*.*(..)) || &quot; +
             &quot;execution(* com.example.silverpear.errors..*.*(..))&quot;)

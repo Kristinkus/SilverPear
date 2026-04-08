@@ -129,20 +129,16 @@ public class OrderController implements OrderApi {
 
     @Override
     public ResponseEntity&lt;List&lt;OrderForUserDto&gt;&gt; bulkCreateOrdersTransactional(BulkOrderRequest request) {
-<span class="nc" id="L132">        List&lt;Order&gt; orders = orderService.createOrderBulkTransactional(request);</span>
-<span class="nc" id="L133">        List&lt;OrderForUserDto&gt; dtos = orders.stream()</span>
-<span class="nc" id="L134">                .map(orderForUserMapper::toDto)</span>
-<span class="nc" id="L135">                .toList();</span>
-<span class="nc" id="L136">        return ResponseEntity.status(HttpStatus.CREATED).body(dtos);</span>
+<span class="nc" id="L132">        return bulkCreateOrders(request);</span>
     }
 
     @Override
     public ResponseEntity&lt;List&lt;OrderForUserDto&gt;&gt; bulkCreateOrdersWithoutTransaction(BulkOrderRequest request) {
-<span class="nc" id="L141">        List&lt;Order&gt; orders = orderService.createOrderBulkWithoutTransaction(request);</span>
-<span class="nc" id="L142">        List&lt;OrderForUserDto&gt; dtos = orders.stream()</span>
-<span class="nc" id="L143">                .map(orderForUserMapper::toDto)</span>
-<span class="nc" id="L144">                .toList();</span>
-<span class="nc" id="L145">        return ResponseEntity.status(HttpStatus.CREATED).body(dtos);</span>
+<span class="nc" id="L137">        List&lt;Order&gt; orders = orderService.createOrderBulkWithoutTransaction(request);</span>
+<span class="nc" id="L138">        List&lt;OrderForUserDto&gt; dtos = orders.stream()</span>
+<span class="nc" id="L139">                .map(orderForUserMapper::toDto)</span>
+<span class="nc" id="L140">                .toList();</span>
+<span class="nc" id="L141">        return ResponseEntity.status(HttpStatus.CREATED).body(dtos);</span>
     }
 
 }

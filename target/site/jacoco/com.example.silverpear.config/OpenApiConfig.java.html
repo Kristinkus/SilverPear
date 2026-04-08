@@ -10,17 +10,17 @@ import org.springframework.context.annotation.Configuration;
 import java.util.List;
 
 @Configuration
-<span class="nc" id="L13">public class OpenApiConfig {</span>
+<span class="fc" id="L13">public class OpenApiConfig {</span>
 
     @Bean
     public OpenAPI silverPearOpenApi() {
-<span class="nc" id="L17">        return new OpenAPI()</span>
-<span class="nc" id="L18">                .info(new Info()</span>
-<span class="nc" id="L19">                        .title(&quot;SilverPear API&quot;)</span>
-<span class="nc" id="L20">                        .version(&quot;1.0&quot;)</span>
-<span class="nc" id="L21">                        .description(&quot;REST API приложения SilverPear: пользователи, заказы, каталог.&quot;)</span>
-<span class="nc" id="L22">                        .contact(new Contact().name(&quot;SilverPear&quot;)))</span>
-<span class="nc" id="L23">                .servers(List.of(new Server().url(&quot;/&quot;).description(&quot;Текущий хост&quot;)));</span>
+<span class="fc" id="L17">        return new OpenAPI()</span>
+<span class="fc" id="L18">                .info(new Info()</span>
+<span class="fc" id="L19">                        .title(&quot;SilverPear API&quot;)</span>
+<span class="fc" id="L20">                        .version(&quot;1.0&quot;)</span>
+<span class="fc" id="L21">                        .description(&quot;REST API приложения SilverPear: пользователи, заказы, каталог.&quot;)</span>
+<span class="fc" id="L22">                        .contact(new Contact().name(&quot;SilverPear&quot;)))</span>
+<span class="fc" id="L23">                .servers(List.of(new Server().url(&quot;/&quot;).description(&quot;Текущий хост&quot;)));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
