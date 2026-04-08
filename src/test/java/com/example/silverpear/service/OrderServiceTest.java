@@ -50,7 +50,7 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        orderService = new OrderService(orderRepository, userRepository, productRepository, orderForUserMapper, cacheService);
+        orderService = new OrderService(orderRepository, userRepository, productRepository, orderForUserMapper, cacheService, null);
     }
 
     @Test
@@ -113,7 +113,8 @@ class OrderServiceTest {
 
         when(cacheService.get(any())).thenReturn(null);
         when(orderRepository.findById(3L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> orderService.findOrderById(3L));
+        long id = 3L;
+        assertThrows(RuntimeException.class, () -> orderService.findOrderById(id));
     }
 
     @Test
@@ -134,7 +135,8 @@ class OrderServiceTest {
 
         when(cacheService.get(any())).thenReturn(null);
         when(orderRepository.findById(100L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> orderService.updateOrder(100L, request));
+        long orderId = 100L;
+        assertThrows(RuntimeException.class, () -> orderService.updateOrder(orderId, request));
 
         Order existing2 = new Order();
         when(cacheService.get(any())).thenReturn(existing2);
@@ -142,7 +144,8 @@ class OrderServiceTest {
         request2.setProductIds(List.of(404L));
         request2.setQuantities(List.of(1));
         when(productRepository.findById(404L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> orderService.updateOrder(12L, request2));
+        long orderId2 = 12L;
+        assertThrows(RuntimeException.class, () -> orderService.updateOrder(orderId2, request2));
     }
 
     @Test
@@ -215,8 +218,9 @@ class OrderServiceTest {
         request.setProductIds(List.of(999L));
         request.setQuantities(List.of(1));
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () ->
-                orderService.createOrderBulkWithoutTransaction(bulkRequest(1L, List.of(request))));
+        var bulk = bulkRequest(1L, List.of(request));
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> orderService.createOrderBulkWithoutTransaction(bulk));
         assertEquals("Some products not found - transaction will rollback!", ex.getMessage());
         verify(orderRepository, never()).save(any());
     }

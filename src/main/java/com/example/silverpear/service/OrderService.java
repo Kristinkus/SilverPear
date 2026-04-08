@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 
 import org.springframework.data.domain.Pageable;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,17 +44,20 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final OrderForUserMapper orderForUserMapper;
     private final CacheService cacheService;
+    private final OrderService self;
 
     public OrderService(OrderRepository orderRepository,
                         UserRepository userRepository,
                         ProductRepository productRepository,
                         OrderForUserMapper orderForUserMapper,
-                        CacheService cacheService) {
+                        CacheService cacheService,
+                        @Lazy OrderService self) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.orderForUserMapper = orderForUserMapper;
         this.cacheService = cacheService;
+        this.self = self != null ? self : this;
     }
 
     @Transactional
@@ -61,7 +65,7 @@ public class OrderService {
         BulkOrderRequest bulkOrderRequest = new BulkOrderRequest();
         bulkOrderRequest.setUserId(userId);
         bulkOrderRequest.setOrders(List.of(request));
-        return createOrderBulkTransactional(bulkOrderRequest).getFirst();
+        return self.createOrderBulkTransactional(bulkOrderRequest).getFirst();
     }
 
     public List<Order> findAllOrdersWithItemsAndProducts() {
@@ -278,10 +282,14 @@ public class OrderService {
         return result;
     }
 
-    @Deprecated
+    /**
+     * @deprecated Use {@link #createOrderBulkTransactional(BulkOrderRequest)} instead.
+     */
+    // TODO: remove after all callers switch to createOrderBulkTransactional
+    @Deprecated(since = "0.0.1", forRemoval = true)
     @Transactional
     public List<Order> createOrderBulk(BulkOrderRequest request) {
-        return createOrderBulkTransactional(request);
+        return self.createOrderBulkTransactional(request);
     }
 
     private Order buildOrder(User user, OrderRequest request) {

@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -52,7 +51,8 @@ class OrderServiceBulkTest {
                 userRepository,
                 productRepository,
                 orderForUserMapper,
-                cacheService
+                cacheService,
+                null
         );
     }
 
@@ -116,12 +116,13 @@ class OrderServiceBulkTest {
                 .thenAnswer(invocation -> invocation.getArgument(0))
                 .thenThrow(new RuntimeException("DB failure on second save"));
 
+        BulkOrderRequest bulk = bulkRequest(1L, List.of(
+                orderRequest(List.of(10L), List.of(1)),
+                orderRequest(List.of(20L), List.of(2))
+        ));
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> orderService.createOrderBulkWithoutTransaction(bulkRequest(1L, List.of(
-                        orderRequest(List.of(10L), List.of(1)),
-                        orderRequest(List.of(20L), List.of(2))
-                )))
+                () -> orderService.createOrderBulkWithoutTransaction(bulk)
         );
 
         assertEquals("DB failure on second save", ex.getMessage());
@@ -137,11 +138,12 @@ class OrderServiceBulkTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(productRepository.findById(999L)).thenReturn(Optional.empty());
 
+        BulkOrderRequest bulk = bulkRequest(1L, List.of(
+                orderRequest(List.of(999L), List.of(1))
+        ));
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> orderService.createOrderBulkTransactional(bulkRequest(1L, List.of(
-                        orderRequest(List.of(999L), List.of(1))
-                )))
+                () -> orderService.createOrderBulkTransactional(bulk)
         );
 
         assertEquals("Some products not found - transaction will rollback!", ex.getMessage());
@@ -167,8 +169,8 @@ class OrderServiceBulkTest {
         ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
         verify(orderRepository, times(1)).save(orderCaptor.capture());
         assertEquals(300.0, orderCaptor.getValue().getTotalAmount());
-        verify(cacheService).evictByPattern(eq("Order:findAll"));
-        verify(cacheService).evictByPattern(eq("Order:findByStatus"));
+        verify(cacheService).evictByPattern("Order:findAll");
+        verify(cacheService).evictByPattern("Order:findByStatus");
     }
 
     private static Product product(Long id, double price) {

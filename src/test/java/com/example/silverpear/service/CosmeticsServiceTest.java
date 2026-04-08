@@ -86,6 +86,7 @@ class CosmeticsServiceTest {
     @Test
     void updateCosmetics_notFound() {
         when(cosmeticsRepository.findById(1L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> cosmeticsService.updateCosmetics(1L, new Cosmetics()));
+        Cosmetics incoming = new Cosmetics();
+        assertThrows(RuntimeException.class, () -> cosmeticsService.updateCosmetics(1L, incoming));
     }
 }

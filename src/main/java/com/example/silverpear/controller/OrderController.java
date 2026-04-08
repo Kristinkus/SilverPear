@@ -129,11 +129,7 @@ public class OrderController implements OrderApi {
 
     @Override
     public ResponseEntity<List<OrderForUserDto>> bulkCreateOrdersTransactional(BulkOrderRequest request) {
-        List<Order> orders = orderService.createOrderBulkTransactional(request);
-        List<OrderForUserDto> dtos = orders.stream()
-                .map(orderForUserMapper::toDto)
-                .toList();
-        return ResponseEntity.status(HttpStatus.CREATED).body(dtos);
+        return bulkCreateOrders(request);
     }
 
     @Override

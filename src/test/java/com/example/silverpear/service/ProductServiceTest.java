@@ -100,7 +100,8 @@ class ProductServiceTest {
 
         when(cacheService.get(any(CacheKey.class))).thenReturn(null);
         when(productRepository.findById(3L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> productService.findById(3L));
+        long missingId = 3L;
+        assertThrows(RuntimeException.class, () -> productService.findById(missingId));
     }
 
     @Test
@@ -135,7 +136,8 @@ class ProductServiceTest {
         assertEquals(55.0, updated.getVolume());
 
         when(productRepository.findById(999L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> productService.update(999L, incoming));
+        long missingProductId = 999L;
+        assertThrows(RuntimeException.class, () -> productService.update(missingProductId, incoming));
     }
 
     @Test
@@ -195,6 +197,7 @@ class ProductServiceTest {
         verify(cacheService).put(captor.capture(), any(Product.class));
 
         when(productRepository.findById(2L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> productService.patchUpdate(2L, Map.of()));
+        Map<String, Object> empty = Map.of();
+        assertThrows(RuntimeException.class, () -> productService.patchUpdate(2L, empty));
     }
 }

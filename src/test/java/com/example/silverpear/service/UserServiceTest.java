@@ -53,7 +53,8 @@ class UserServiceTest {
     @Test
     void getUserById_notFound() {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.getUserById(1L));
+        long userId = 1L;
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.getUserById(userId));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
@@ -69,7 +70,8 @@ class UserServiceTest {
     @Test
     void getUserWithOrders_notFound() {
         when(userRepository.findByIdWithOrdersAndItems(3L)).thenReturn(Optional.empty());
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.getUserWithOrders(3L));
+        long userId = 3L;
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.getUserWithOrders(userId));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
@@ -134,9 +136,10 @@ class UserServiceTest {
     @Test
     void updateUser_notFound() {
         when(userRepository.existsById(1L)).thenReturn(false);
+        UserRequest missing = new UserRequest();
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> userService.updateUser(1L, new UserRequest()));
+                () -> userService.updateUser(1L, missing));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 

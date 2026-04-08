@@ -85,6 +85,7 @@ class PerfumeServiceTest {
     @Test
     void updatePerfume_notFound() {
         when(perfumeRepository.findById(1L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> perfumeService.updatePerfume(1L, new Perfume()));
+        Perfume incoming = new Perfume();
+        assertThrows(RuntimeException.class, () -> perfumeService.updatePerfume(1L, incoming));
     }
 }
