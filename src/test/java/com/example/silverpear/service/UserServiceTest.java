@@ -67,6 +67,13 @@ class UserServiceTest {
     }
 
     @Test
+    void getUserWithOrders_notFound() {
+        when(userRepository.findByIdWithOrdersAndItems(3L)).thenReturn(Optional.empty());
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.getUserWithOrders(3L));
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
     void createUser_success() {
         UserRequest request = new UserRequest();
         request.setLogin("l");
@@ -121,7 +128,7 @@ class UserServiceTest {
         when(userMapper.toResponse(saved)).thenReturn(response);
 
         assertEquals(response, userService.updateUser(1L, request));
-        assertEquals(1L, entity.getId());
+        assertEquals(Long.valueOf(1L), entity.getId());
     }
 
     @Test

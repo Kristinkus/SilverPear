@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SilverPear</a> &gt; <a href="index.source.html" class="el_package">com.example.silverpear.service</a> &gt; <span class="el_source">OrderService.java</span></div><h1>OrderService.java</h1><pre class="source lang-java linenums">package com.example.silverpear.service;
+
+import com.example.silverpear.cache.CacheKey;
+import com.example.silverpear.enums.ErrorMessages;
+import com.example.silverpear.enums.OrderStatus;
+import com.example.silverpear.product.entity.Order;
+import com.example.silverpear.product.entity.OrderItem;
+import com.example.silverpear.product.entity.Product;
+import com.example.silverpear.product.entity.User;
+import com.example.silverpear.product.mapper.OrderForUserMapper;
+import com.example.silverpear.product.productdto.BulkOrderRequest;
+import com.example.silverpear.product.productdto.OrderRequest;
+import com.example.silverpear.repository.OrderRepository;
+import com.example.silverpear.repository.ProductRepository;
+import com.example.silverpear.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+
+import org.springframework.data.domain.Pageable;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.IntStream;
+
+<span class="fc" id="L31">@Slf4j</span>
+@Service
+public class OrderService {
+
+    private static final String CACHE_ENTITY_ORDER = &quot;Order&quot;;
+    private static final String CACHE_KEY_FIND_ALL = CACHE_ENTITY_ORDER + &quot;:findAll&quot;;
+    private static final String CACHE_KEY_FIND_BY_STATUS = CACHE_ENTITY_ORDER + &quot;:findByStatus&quot;;
+    private static final String CACHE_KEY_FIND_BY_ID = CACHE_ENTITY_ORDER + &quot;:findById&quot;;
+    private static final String CACHE_METHOD_FIND_BY_ID = &quot;findById&quot;;
+
+    private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
+    private final OrderForUserMapper orderForUserMapper;
+    private final CacheService cacheService;
+
+    public OrderService(OrderRepository orderRepository,
+                        UserRepository userRepository,
+                        ProductRepository productRepository,
+                        OrderForUserMapper orderForUserMapper,
+<span class="fc" id="L51">                        CacheService cacheService) {</span>
+<span class="fc" id="L52">        this.orderRepository = orderRepository;</span>
+<span class="fc" id="L53">        this.userRepository = userRepository;</span>
+<span class="fc" id="L54">        this.productRepository = productRepository;</span>
+<span class="fc" id="L55">        this.orderForUserMapper = orderForUserMapper;</span>
+<span class="fc" id="L56">        this.cacheService = cacheService;</span>
+<span class="fc" id="L57">    }</span>
+
+    @Transactional
+    public Order createOrderWithTransaction(Long userId, OrderRequest request) {
+<span class="fc" id="L61">        BulkOrderRequest bulkOrderRequest = new BulkOrderRequest();</span>
+<span class="fc" id="L62">        bulkOrderRequest.setUserId(userId);</span>
+<span class="fc" id="L63">        bulkOrderRequest.setOrders(List.of(request));</span>
+<span class="fc" id="L64">        return createOrderBulkTransactional(bulkOrderRequest).getFirst();</span>
+    }
+
+    public List&lt;Order&gt; findAllOrdersWithItemsAndProducts() {
+<span class="fc" id="L68">        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, &quot;findAllOrdersWithItemsAndProducts&quot;, &quot;&quot;, 0, 0, &quot;&quot;, &quot;&quot;);</span>
+
+<span class="fc" id="L70">        List&lt;Order&gt; cached = cacheService.get(key);</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (cached != null) {</span>
+<span class="fc" id="L72">            log.info(&quot;Orders with items retrieved from cache&quot;);</span>
+<span class="fc" id="L73">            return cached;</span>
+        }
+
+<span class="fc" id="L76">        log.info(&quot;Orders with items not in cache&quot;);</span>
+<span class="fc" id="L77">        List&lt;Order&gt; orders = orderRepository.findAllOrdersWithItemsAndProducts();</span>
+<span class="fc" id="L78">        cacheService.put(key, orders);</span>
+<span class="fc" id="L79">        log.info(&quot;Orders with items saved to cache&quot;);</span>
+
+<span class="fc" id="L81">        return orders;</span>
+    }
+
+    public void deleteOrder(Long orderId) {
+<span class="fc" id="L85">        orderRepository.deleteById(orderId);</span>
+
+<span class="fc" id="L87">        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, CACHE_METHOD_FIND_BY_ID, &quot;id=&quot; + orderId, 0, 0, &quot;&quot;, &quot;&quot;);</span>
+<span class="fc" id="L88">        cacheService.evict(key);</span>
+<span class="fc" id="L89">        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);</span>
+<span class="fc" id="L90">        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);</span>
+<span class="fc" id="L91">        log.info(&quot;Cache invalidated after order deletion: {}&quot;, orderId);</span>
+<span class="fc" id="L92">    }</span>
+
+    public Order findOrderById(Long orderId) {
+<span class="fc" id="L95">        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, CACHE_METHOD_FIND_BY_ID, &quot;id=&quot; + orderId, 0, 0, &quot;&quot;, &quot;&quot;);</span>
+
+<span class="fc" id="L97">        Order cached = cacheService.get(key);</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">        if (cached != null) {</span>
+<span class="fc" id="L99">            log.info(&quot;Order retrieved from cache: {}&quot;, orderId);</span>
+<span class="fc" id="L100">            return cached;</span>
+        }
+
+<span class="fc" id="L103">        log.info(&quot;Order not in cache: {}&quot;, orderId);</span>
+<span class="fc" id="L104">        Order order = orderRepository.findById(orderId)</span>
+<span class="fc" id="L105">                .orElseThrow(() -&gt; new RuntimeException(ErrorMessages.ORDER_NOT_FOUND.withId(orderId)));</span>
+
+<span class="fc" id="L107">        cacheService.put(key, order);</span>
+<span class="fc" id="L108">        log.info(&quot;Order saved to cache: {}&quot;, orderId);</span>
+
+<span class="fc" id="L110">        return order;</span>
+    }
+
+    @Transactional
+    public Order updateOrder(Long orderId, OrderRequest request) {
+<span class="fc" id="L115">        Order existingOrder = findOrderById(orderId);</span>
+<span class="fc" id="L116">        existingOrder.getOrderItems().clear();</span>
+
+<span class="fc" id="L118">        List&lt;Product&gt; products = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        for (Long productId : request.getProductIds()) {</span>
+<span class="fc" id="L120">            Product product = productRepository.findById(productId)</span>
+<span class="fc" id="L121">                    .orElseThrow(() -&gt; new RuntimeException(&quot;Product not found with id: &quot; + productId));</span>
+<span class="fc" id="L122">            products.add(product);</span>
+<span class="fc" id="L123">        }</span>
+
+<span class="fc" id="L125">        double totalAmount = 0.0;</span>
+<span class="fc bfc" id="L126" title="All 2 branches covered.">        for (int i = 0; i &lt; request.getProductIds().size(); i++) {</span>
+<span class="fc" id="L127">            Product product = products.get(i);</span>
+<span class="fc" id="L128">            Integer quantity = request.getQuantities().get(i);</span>
+
+<span class="fc" id="L130">            OrderItem item = new OrderItem();</span>
+<span class="fc" id="L131">            item.setQuantity(quantity);</span>
+<span class="fc" id="L132">            item.setPriceAtTime(product.getSalePrice());</span>
+<span class="fc" id="L133">            item.setProduct(product);</span>
+<span class="fc" id="L134">            item.setOrder(existingOrder);</span>
+
+<span class="fc" id="L136">            existingOrder.addOrderItem(item);</span>
+<span class="fc" id="L137">            totalAmount += product.getSalePrice() * quantity;</span>
+        }
+<span class="fc" id="L139">        existingOrder.setTotalAmount(totalAmount);</span>
+
+<span class="fc" id="L141">        Order updated = orderRepository.save(existingOrder);</span>
+
+<span class="fc" id="L143">        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, CACHE_METHOD_FIND_BY_ID, &quot;id=&quot; + orderId, 0, 0, &quot;&quot;, &quot;&quot;);</span>
+<span class="fc" id="L144">        cacheService.put(key, updated);</span>
+<span class="fc" id="L145">        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);</span>
+<span class="fc" id="L146">        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);</span>
+<span class="fc" id="L147">        log.info(&quot;Cache updated after order update: {}&quot;, orderId);</span>
+
+<span class="fc" id="L149">        return updated;</span>
+    }
+
+    @Transactional
+    public Order updateOrderStatus(Long orderId, OrderStatus status) {
+<span class="fc" id="L154">        Order order = findOrderById(orderId);</span>
+<span class="fc" id="L155">        order.setStatus(status);</span>
+
+<span class="fc" id="L157">        Order updated = orderRepository.save(order);</span>
+
+<span class="fc" id="L159">        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, CACHE_METHOD_FIND_BY_ID, &quot;id=&quot; + orderId, 0, 0, &quot;&quot;, &quot;&quot;);</span>
+<span class="fc" id="L160">        cacheService.put(key, updated);</span>
+<span class="fc" id="L161">        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);</span>
+<span class="fc" id="L162">        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);</span>
+<span class="fc" id="L163">        log.info(&quot;Cache updated after status change: {}&quot;, orderId);</span>
+
+<span class="fc" id="L165">        return updated;</span>
+    }
+
+    public List&lt;Order&gt; findByStatus(OrderStatus status) {
+<span class="fc" id="L169">        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, &quot;findByStatus&quot;, &quot;status=&quot; + status, 0, 0, &quot;&quot;, &quot;&quot;);</span>
+
+<span class="fc" id="L171">        List&lt;Order&gt; cached = cacheService.get(key);</span>
+<span class="fc bfc" id="L172" title="All 2 branches covered.">        if (cached != null) {</span>
+<span class="fc" id="L173">            log.info(&quot;Orders by status {} retrieved from cache&quot;, status);</span>
+<span class="fc" id="L174">            return cached;</span>
+        }
+
+<span class="fc" id="L177">        log.info(&quot;Orders by status {} not in cache&quot;, status);</span>
+<span class="fc" id="L178">        List&lt;Order&gt; orders = orderRepository.findOrderByStatus(status);</span>
+<span class="fc" id="L179">        cacheService.put(key, orders);</span>
+<span class="fc" id="L180">        log.info(&quot;Orders by status {} saved to cache&quot;, status);</span>
+
+<span class="fc" id="L182">        return orders;</span>
+    }
+
+    public Page&lt;Order&gt; getOrdersPage(Pageable pageable) {
+<span class="fc" id="L186">        CacheKey key = new CacheKey(</span>
+                CACHE_ENTITY_ORDER,
+                &quot;getOrdersPage&quot;,
+                &quot;&quot;,
+<span class="fc" id="L190">                pageable.getPageNumber(),</span>
+<span class="fc" id="L191">                pageable.getPageSize(),</span>
+<span class="fc" id="L192">                pageable.getSort().iterator().next().getProperty(),</span>
+<span class="fc" id="L193">                pageable.getSort().iterator().next().getDirection().name().toLowerCase()</span>
+        );
+
+<span class="fc" id="L196">        Page&lt;Order&gt; cached = cacheService.get(key);</span>
+<span class="fc bfc" id="L197" title="All 2 branches covered.">        if (cached != null) {</span>
+<span class="fc" id="L198">            log.info(&quot;Orders page {} retrieved from cache&quot;, pageable.getPageNumber());</span>
+<span class="fc" id="L199">            return cached;</span>
+        }
+
+<span class="fc" id="L202">        log.info(&quot;Orders page {} not in cache&quot;, pageable.getPageNumber());</span>
+<span class="fc" id="L203">        Page&lt;Order&gt; orders = orderRepository.findAll(pageable);</span>
+<span class="fc" id="L204">        cacheService.put(key, orders);</span>
+<span class="fc" id="L205">        log.info(&quot;Orders page {} saved to cache&quot;, pageable.getPageNumber());</span>
+
+<span class="fc" id="L207">        return orders;</span>
+    }
+
+    public List&lt;Order&gt; getOrdersByFilters(String brand, Double minAmount) {
+<span class="fc" id="L211">        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, &quot;getOrdersByFilters&quot;,</span>
+                &quot;brand=&quot; + brand + &quot;|minAmount=&quot; + minAmount,
+                0, 0, &quot;&quot;, &quot;&quot;);
+
+<span class="fc" id="L215">        List&lt;Order&gt; cached = cacheService.get(key);</span>
+<span class="fc bfc" id="L216" title="All 2 branches covered.">        if (cached != null) {</span>
+<span class="fc" id="L217">            log.info(&quot;Filtered orders retrieved from cache&quot;);</span>
+<span class="fc" id="L218">            return cached;</span>
+        }
+
+<span class="fc" id="L221">        log.info(&quot;Filtered orders not in cache&quot;);</span>
+<span class="fc" id="L222">        List&lt;Order&gt; orders = orderRepository.findOrdersByBrandAndStatusAndMinAmount(brand, minAmount);</span>
+<span class="fc" id="L223">        cacheService.put(key, orders);</span>
+<span class="fc" id="L224">        log.info(&quot;Filtered orders saved to cache&quot;);</span>
+
+<span class="fc" id="L226">        return orders;</span>
+    }
+
+    public List&lt;Order&gt; getOrdersByFiltersNative(String brand, Double minAmount) {
+<span class="fc" id="L230">        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, &quot;getOrdersByFiltersNative&quot;,</span>
+                &quot;brand=&quot; + brand + &quot;|minAmount=&quot; + minAmount,
+                0, 0, &quot;&quot;, &quot;&quot;);
+
+<span class="fc" id="L234">        List&lt;Order&gt; cached = cacheService.get(key);</span>
+<span class="fc bfc" id="L235" title="All 2 branches covered.">        if (cached != null) {</span>
+<span class="fc" id="L236">            log.info(&quot;Filtered orders (native) retrieved from cache&quot;);</span>
+<span class="fc" id="L237">            return cached;</span>
+        }
+
+<span class="fc" id="L240">        log.info(&quot;Filtered orders (native) not in cache&quot;);</span>
+<span class="fc" id="L241">        List&lt;Order&gt; orders = orderRepository.findOrdersByBrandAndStatusAndMinAmountNative(brand, minAmount);</span>
+<span class="fc" id="L242">        cacheService.put(key, orders);</span>
+<span class="fc" id="L243">        log.info(&quot;Filtered orders (native) saved to cache&quot;);</span>
+
+<span class="fc" id="L245">        return orders;</span>
+    }
+
+
+    @Transactional
+    public List&lt;Order&gt; createOrderBulkTransactional(BulkOrderRequest request) {
+<span class="fc" id="L251">        User user = userRepository.findById(request.getUserId())</span>
+<span class="pc" id="L252">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found with id: &quot; + request.getUserId()));</span>
+
+<span class="fc" id="L254">        List&lt;Order&gt; result = request.getOrders().stream()</span>
+<span class="fc" id="L255">                .map(orderRequest -&gt; buildOrder(user, orderRequest))</span>
+<span class="fc" id="L256">                .map(orderRepository::save)</span>
+<span class="fc" id="L257">                .toList();</span>
+
+<span class="fc" id="L259">        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);</span>
+<span class="fc" id="L260">        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);</span>
+<span class="fc" id="L261">        log.info(&quot;Cache invalidated after bulk order creation&quot;);</span>
+<span class="fc" id="L262">        return result;</span>
+    }
+
+    public List&lt;Order&gt; createOrderBulkWithoutTransaction(BulkOrderRequest request) {
+<span class="fc" id="L266">        User user = userRepository.findById(request.getUserId())</span>
+<span class="pc" id="L267">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found with id: &quot; + request.getUserId()));</span>
+
+<span class="fc" id="L269">        List&lt;Order&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L270" title="All 2 branches covered.">        for (OrderRequest orderRequest : request.getOrders()) {</span>
+<span class="fc" id="L271">            Order order = buildOrder(user, orderRequest);</span>
+<span class="fc" id="L272">            result.add(orderRepository.saveAndFlush(order));</span>
+<span class="fc" id="L273">        }</span>
+
+<span class="fc" id="L275">        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);</span>
+<span class="fc" id="L276">        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);</span>
+<span class="fc" id="L277">        log.info(&quot;Cache invalidated after bulk order creation&quot;);</span>
+<span class="fc" id="L278">        return result;</span>
+    }
+
+    @Deprecated
+    @Transactional
+    public List&lt;Order&gt; createOrderBulk(BulkOrderRequest request) {
+<span class="fc" id="L284">        return createOrderBulkTransactional(request);</span>
+    }
+
+    private Order buildOrder(User user, OrderRequest request) {
+<span class="fc" id="L288">        List&lt;Product&gt; products = request.getProductIds().stream()</span>
+<span class="fc" id="L289">                .map(this::findProductOrThrow)</span>
+<span class="fc" id="L290">                .toList();</span>
+
+<span class="fc" id="L292">        Order order = new Order();</span>
+<span class="fc" id="L293">        order.setOrderNumber(&quot;ORD-&quot; + UUID.randomUUID().toString().substring(0, 8));</span>
+<span class="fc" id="L294">        order.setOrderDate(LocalDateTime.now());</span>
+<span class="fc" id="L295">        order.setStatus(OrderStatus.NEW);</span>
+<span class="fc" id="L296">        order.setUser(user);</span>
+
+<span class="fc" id="L298">        double totalAmount = IntStream.range(0, request.getProductIds().size())</span>
+<span class="fc" id="L299">                .mapToDouble(i -&gt; {</span>
+<span class="fc" id="L300">                    Product product = products.get(i);</span>
+<span class="fc" id="L301">                    Integer quantity = request.getQuantities().get(i);</span>
+<span class="fc" id="L302">                    OrderItem item = new OrderItem();</span>
+<span class="fc" id="L303">                    item.setQuantity(quantity);</span>
+<span class="fc" id="L304">                    item.setPriceAtTime(product.getSalePrice());</span>
+<span class="fc" id="L305">                    item.setProduct(product);</span>
+<span class="fc" id="L306">                    item.setOrder(order);</span>
+<span class="fc" id="L307">                    order.addOrderItem(item);</span>
+<span class="fc" id="L308">                    return product.getSalePrice() * quantity;</span>
+                })
+<span class="fc" id="L310">                .sum();</span>
+
+<span class="fc" id="L312">        order.setTotalAmount(totalAmount);</span>
+<span class="fc" id="L313">        return order;</span>
+    }
+
+    private Product findProductOrThrow(Long productId) {
+<span class="fc" id="L317">        Optional&lt;Product&gt; optionalProduct = productRepository.findById(productId);</span>
+<span class="fc" id="L318">        return optionalProduct.orElseThrow(</span>
+<span class="fc" id="L319">                () -&gt; new RuntimeException(&quot;Some products not found - transaction will rollback!&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

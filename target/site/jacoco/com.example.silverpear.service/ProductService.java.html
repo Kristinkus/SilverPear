@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SilverPear</a> &gt; <a href="index.source.html" class="el_package">com.example.silverpear.service</a> &gt; <span class="el_source">ProductService.java</span></div><h1>ProductService.java</h1><pre class="source lang-java linenums">package com.example.silverpear.service;
+
+import com.example.silverpear.enums.Gender;
+import com.example.silverpear.cache.CacheKey;
+import com.example.silverpear.product.entity.Product;
+import com.example.silverpear.repository.ProductRepository;
+import com.example.silverpear.enums.ErrorMessages;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@Service
+<span class="fc" id="L21">@Slf4j</span>
+public class ProductService {
+
+    private static final String CACHE_ENTITY_PRODUCT = &quot;Product&quot;;
+    private static final String CACHE_KEY_FIND_ALL = CACHE_ENTITY_PRODUCT + &quot;:findAll&quot;;
+    private static final String CACHE_KEY_FIND_BY_CATEGORY = CACHE_ENTITY_PRODUCT + &quot;:findByCategory&quot;;
+    private static final String CACHE_METHOD_FIND_BY_ID = &quot;findById&quot;;
+
+    protected final ProductRepository productRepository;
+    protected final CacheService cacheService;
+
+<span class="fc" id="L32">    public ProductService(ProductRepository productRepository, CacheService cacheService) {</span>
+<span class="fc" id="L33">        this.productRepository = productRepository;</span>
+<span class="fc" id="L34">        this.cacheService = cacheService;</span>
+<span class="fc" id="L35">    }</span>
+
+    public List&lt;Product&gt; findAll() {
+<span class="fc" id="L38">        CacheKey key = new CacheKey(</span>
+                CACHE_ENTITY_PRODUCT,
+                &quot;findAll&quot;,
+                &quot;&quot;,
+                0, 0,
+                &quot;id&quot;,
+                &quot;asc&quot;
+        );
+
+<span class="fc" id="L47">        List&lt;Product&gt; cached = cacheService.get(key);</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        if (cached != null) {</span>
+<span class="fc" id="L49">            return cached;</span>
+        }
+
+<span class="fc" id="L52">        List&lt;Product&gt; products = productRepository.findAll();</span>
+<span class="fc" id="L53">        cacheService.put(key, products);</span>
+<span class="fc" id="L54">        return products;</span>
+    }
+
+    public Page&lt;Product&gt; findAll(Pageable pageable) {
+<span class="fc" id="L58">        CacheKey key = new CacheKey(</span>
+                CACHE_ENTITY_PRODUCT,
+                &quot;findAll&quot;,
+                &quot;&quot;,
+<span class="fc" id="L62">                pageable.getPageNumber(),</span>
+<span class="fc" id="L63">                pageable.getPageSize(),</span>
+                &quot;id&quot;,
+                &quot;asc&quot;
+        );
+
+<span class="fc" id="L68">        Page&lt;Product&gt; cached = cacheService.get(key);</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        if (cached != null) {</span>
+<span class="fc" id="L70">            return cached;</span>
+        }
+
+<span class="fc" id="L73">        Page&lt;Product&gt; products = productRepository.findAll(pageable);</span>
+<span class="fc" id="L74">        cacheService.put(key, products);</span>
+<span class="fc" id="L75">        return products;</span>
+    }
+
+    public List&lt;Product&gt; findByBrand(String brand) {
+<span class="fc" id="L79">        return productRepository.findByBrand(brand);</span>
+    }
+
+    public List&lt;Product&gt; findByCategory(String category) {
+<span class="fc" id="L83">        return productRepository.findByCategory(category);</span>
+    }
+
+    public Product findById(Long id) {
+<span class="fc" id="L87">        CacheKey key = new CacheKey(</span>
+                CACHE_ENTITY_PRODUCT,
+                CACHE_METHOD_FIND_BY_ID,
+                &quot;id=&quot; + id,
+                0, 0, &quot;&quot;, &quot;&quot;
+        );
+
+<span class="fc" id="L94">        Product cached = cacheService.get(key);</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">        if (cached != null) {</span>
+<span class="fc" id="L96">            log.info(&quot;Product retrieved from cache: {}&quot;, id);</span>
+<span class="fc" id="L97">            return cached;</span>
+        }
+
+<span class="fc" id="L100">        log.info(&quot;Product not in cache: {}&quot;, id);</span>
+<span class="fc" id="L101">        Product product = productRepository.findById(id)</span>
+<span class="fc" id="L102">                .orElseThrow(() -&gt; new RuntimeException(ErrorMessages.PRODUCT_NOT_FOUND.withId(id)));</span>
+
+<span class="fc" id="L104">        cacheService.put(key, product);</span>
+<span class="fc" id="L105">        log.info(&quot;Product saved to cache: {}&quot;, id);</span>
+
+<span class="fc" id="L107">        return product;</span>
+    }
+
+    public List&lt;Product&gt; findByName(String name) {
+<span class="fc" id="L111">        return productRepository.findByName(name);</span>
+    }
+
+    public Product create(Product product) {
+<span class="fc" id="L115">        Product saved = productRepository.save(product);</span>
+
+<span class="fc" id="L117">        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);</span>
+<span class="fc" id="L118">        log.info(&quot;Cache invalidated after product creation&quot;);</span>
+
+<span class="fc" id="L120">        return saved;</span>
+    }
+
+    public List&lt;Product&gt; searchProducts(String name, String brand, String category) {
+<span class="fc" id="L124">        List&lt;Product&gt; products = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        if (name != null) {</span>
+<span class="fc" id="L126">            products.addAll(productRepository.findByName(name));</span>
+        }
+<span class="fc bfc" id="L128" title="All 2 branches covered.">        if (brand != null) {</span>
+<span class="fc" id="L129">            products.addAll(productRepository.findByBrand(brand));</span>
+        }
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        if (category != null) {</span>
+<span class="fc" id="L132">            products.addAll(productRepository.findByCategory(category));</span>
+        }
+<span class="fc" id="L134">        return products;</span>
+    }
+
+    public void deleteById(Long id) {
+<span class="fc" id="L138">        productRepository.deleteById(id);</span>
+
+<span class="fc" id="L140">        CacheKey key = new CacheKey(CACHE_ENTITY_PRODUCT, CACHE_METHOD_FIND_BY_ID, &quot;id=&quot; + id, 0, 0, &quot;&quot;, &quot;&quot;);</span>
+<span class="fc" id="L141">        cacheService.evict(key);</span>
+<span class="fc" id="L142">        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);</span>
+<span class="fc" id="L143">        log.info(&quot;Cache invalidated after product deletion: {}&quot;, id);</span>
+<span class="fc" id="L144">    }</span>
+
+    public Product update(Long id, Product product) {
+<span class="fc" id="L147">        Product existingProduct = productRepository.findById(id)</span>
+<span class="fc" id="L148">                .orElseThrow(() -&gt; new RuntimeException(&quot;Product not found with id: &quot; + id));</span>
+
+<span class="fc" id="L150">        updateBaseFields(existingProduct, product);</span>
+
+<span class="fc" id="L152">        Product updated = productRepository.save(existingProduct);</span>
+
+<span class="fc" id="L154">        CacheKey productKey = new CacheKey(CACHE_ENTITY_PRODUCT, CACHE_METHOD_FIND_BY_ID, &quot;id=&quot; + id, 0, 0, &quot;&quot;, &quot;&quot;);</span>
+<span class="fc" id="L155">        cacheService.put(productKey, updated);</span>
+<span class="fc" id="L156">        log.info(&quot;Updated product saved to cache: {}&quot;, id);</span>
+
+<span class="fc" id="L158">        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);</span>
+<span class="fc" id="L159">        cacheService.evictByPattern(CACHE_KEY_FIND_BY_CATEGORY);</span>
+<span class="fc" id="L160">        log.info(&quot;Cache invalidated after product update: {}&quot;, id);</span>
+
+<span class="fc" id="L162">        return updated;</span>
+    }
+
+    protected void updateBaseFields(Product existing, Product source) {
+<span class="fc" id="L166">        existing.setName(source.getName());</span>
+<span class="fc" id="L167">        existing.setBrand(source.getBrand());</span>
+<span class="fc" id="L168">        existing.setDescription(source.getDescription());</span>
+<span class="fc" id="L169">        existing.setCategory(source.getCategory());</span>
+<span class="fc" id="L170">        existing.setSalePrice(source.getSalePrice());</span>
+<span class="fc" id="L171">        existing.setInStock(source.isInStock());</span>
+<span class="fc" id="L172">        existing.setType(source.getType());</span>
+<span class="fc" id="L173">        existing.setGender(source.getGender());</span>
+<span class="fc" id="L174">        existing.setVolume(source.getVolume());</span>
+<span class="fc" id="L175">    }</span>
+
+    @Transactional
+    public Product patchUpdate(Long id, Map&lt;String, Object&gt; updates) {
+<span class="fc" id="L179">        Product existingProduct = productRepository.findById(id)</span>
+<span class="fc" id="L180">                .orElseThrow(() -&gt; new RuntimeException(&quot;Product not found with id: &quot; + id));</span>
+
+<span class="fc" id="L182">        updates.forEach((key, value) -&gt; {</span>
+<span class="fc bfc" id="L183" title="All 2 branches covered.">            if (value == null) {</span>
+<span class="fc" id="L184">                return;</span>
+            }
+
+<span class="fc bfc" id="L187" title="All 10 branches covered.">            switch (key) {</span>
+                case &quot;name&quot;:
+<span class="fc" id="L189">                    existingProduct.setName((String) value);</span>
+<span class="fc" id="L190">                    break;</span>
+                case &quot;brand&quot;:
+<span class="fc" id="L192">                    existingProduct.setBrand((String) value);</span>
+<span class="fc" id="L193">                    break;</span>
+                case &quot;description&quot;:
+<span class="fc" id="L195">                    existingProduct.setDescription((String) value);</span>
+<span class="fc" id="L196">                    break;</span>
+                case &quot;category&quot;:
+<span class="fc" id="L198">                    existingProduct.setCategory((String) value);</span>
+<span class="fc" id="L199">                    break;</span>
+                case &quot;salePrice&quot;:
+<span class="fc" id="L201">                    existingProduct.setSalePrice(((Number) value).doubleValue());</span>
+<span class="fc" id="L202">                    break;</span>
+                case &quot;inStock&quot;:
+<span class="fc" id="L204">                    existingProduct.setInStock((Boolean) value);</span>
+<span class="fc" id="L205">                    break;</span>
+                case &quot;productType&quot;:
+<span class="fc" id="L207">                    existingProduct.setType((String) value);</span>
+<span class="fc" id="L208">                    break;</span>
+                case &quot;gender&quot;:
+<span class="fc" id="L210">                    existingProduct.setGender(Gender.valueOf((String) value));</span>
+<span class="fc" id="L211">                    break;</span>
+                case &quot;volume&quot;:
+<span class="fc" id="L213">                    existingProduct.setVolume(((Number) value).doubleValue());</span>
+<span class="fc" id="L214">                    break;</span>
+                default:
+                    break;
+            }
+<span class="fc" id="L218">        });</span>
+
+<span class="fc" id="L220">        Product updated = productRepository.save(existingProduct);</span>
+
+<span class="fc" id="L222">        CacheKey productKey = new CacheKey(CACHE_ENTITY_PRODUCT, CACHE_METHOD_FIND_BY_ID, &quot;id=&quot; + id, 0, 0, &quot;&quot;, &quot;&quot;);</span>
+<span class="fc" id="L223">        cacheService.put(productKey, updated);</span>
+<span class="fc" id="L224">        log.info(&quot;Patched product saved to cache: {}&quot;, id);</span>
+
+<span class="fc" id="L226">        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);</span>
+<span class="fc" id="L227">        cacheService.evictByPattern(CACHE_KEY_FIND_BY_CATEGORY);</span>
+<span class="fc" id="L228">        log.info(&quot;Cache invalidated after product patch update: {}&quot;, id);</span>
+
+<span class="fc" id="L230">        return updated;</span>
+    }
+    public List&lt;Product&gt; searchInRange(Double lowPrice, Double highPrice) {
+<span class="fc" id="L233">        return productRepository.findInRange(lowPrice, highPrice);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

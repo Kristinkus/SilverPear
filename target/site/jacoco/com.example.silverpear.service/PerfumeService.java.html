@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PerfumeService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SilverPear</a> &gt; <a href="index.source.html" class="el_package">com.example.silverpear.service</a> &gt; <span class="el_source">PerfumeService.java</span></div><h1>PerfumeService.java</h1><pre class="source lang-java linenums">package com.example.silverpear.service;
+
+
+import com.example.silverpear.product.entity.Perfume;
+import com.example.silverpear.enums.ErrorMessages;
+import com.example.silverpear.repository.PerfumeRepository;
+import com.example.silverpear.repository.ProductRepository;
+
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class PerfumeService extends ProductService {
+
+    private final PerfumeRepository perfumeRepository;
+
+    
+    public PerfumeService(ProductRepository productRepository,
+                          PerfumeRepository perfumeRepository,
+                          CacheService cacheService) {
+<span class="fc" id="L22">        super(productRepository, cacheService);</span>
+<span class="fc" id="L23">        this.perfumeRepository = perfumeRepository;</span>
+
+<span class="fc" id="L25">    }</span>
+
+    public Perfume create(Perfume perfume) {
+<span class="fc" id="L28">        return perfumeRepository.save(perfume);</span>
+    }
+
+    public List&lt;Perfume&gt; findAllPerfume() {
+<span class="fc" id="L32">        return perfumeRepository.findAll();</span>
+    }
+
+    public void delete(Perfume perfume) {
+<span class="fc" id="L36">        perfumeRepository.delete(perfume);</span>
+<span class="fc" id="L37">    }</span>
+
+    public Perfume updatePerfume(Long id, Perfume perfume) {
+<span class="fc" id="L40">        Perfume existingPerfume = perfumeRepository.findById(id)</span>
+<span class="fc" id="L41">                .orElseThrow(() -&gt; new RuntimeException(ErrorMessages.PERFUME_NOT_FOUND.withId(id)));</span>
+<span class="fc" id="L42">        super.updateBaseFields(existingPerfume, perfume);</span>
+
+<span class="fc" id="L44">        existingPerfume.setTopNotes(perfume.getTopNotes());</span>
+<span class="fc" id="L45">        existingPerfume.setMiddleNotes(perfume.getMiddleNotes());</span>
+<span class="fc" id="L46">        existingPerfume.setBaseNotes(perfume.getBaseNotes());</span>
+
+<span class="fc" id="L48">        return perfumeRepository.save(existingPerfume);</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CacheService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SilverPear</a> &gt; <a href="index.source.html" class="el_package">com.example.silverpear.service</a> &gt; <span class="el_source">CacheService.java</span></div><h1>CacheService.java</h1><pre class="source lang-java linenums">package com.example.silverpear.service;
+
+import com.example.silverpear.cache.CacheKey;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+<span class="fc" id="L10">@Slf4j</span>
+@Service
+<span class="fc" id="L12">public class CacheService {</span>
+
+<span class="fc" id="L14">    private final Map&lt;CacheKey, Object&gt; cache = new ConcurrentHashMap&lt;&gt;();</span>
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;T&gt; T get(CacheKey key) {
+<span class="fc bfc" id="L18" title="All 2 branches covered.">        if (cache.containsKey(key)) {</span>
+<span class="fc" id="L19">            log.info(&quot;Получено из кэша: {} {}&quot;, key.getEntityType(), key);</span>
+<span class="fc" id="L20">            return (T) cache.get(key);</span>
+        }
+<span class="fc" id="L22">        return null;</span>
+    }
+
+    public void put(CacheKey key, Object data) {
+<span class="fc" id="L26">        cache.put(key, data);</span>
+<span class="fc" id="L27">        log.info(&quot;Сохранено в кэш: {} {}&quot;, key.getEntityType(), key);</span>
+<span class="fc" id="L28">    }</span>
+
+    public void evict(CacheKey key) {
+<span class="fc bfc" id="L31" title="All 2 branches covered.">        if (cache.containsKey(key)) {</span>
+<span class="fc" id="L32">            cache.remove(key);</span>
+<span class="fc" id="L33">            log.info(&quot;Cache evicted: {} - {}&quot;, key.getEntityType(), key);</span>
+        }
+<span class="fc" id="L35">    }</span>
+
+    public void evictByPattern(String pattern) {
+<span class="fc" id="L38">        cache.keySet().removeIf(key -&gt; key.toString().contains(pattern));</span>
+<span class="fc" id="L39">        log.info(&quot;Cache evicted by pattern '{}': entries removed&quot;, pattern);</span>
+<span class="fc" id="L40">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

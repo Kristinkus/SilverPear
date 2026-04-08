@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PerfumeMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SilverPear</a> &gt; <a href="index.source.html" class="el_package">com.example.silverpear.product.mapper</a> &gt; <span class="el_source">PerfumeMapper.java</span></div><h1>PerfumeMapper.java</h1><pre class="source lang-java linenums">package com.example.silverpear.product.mapper;
+
+import com.example.silverpear.product.entity.Perfume;
+import com.example.silverpear.product.entity.Product;
+import com.example.silverpear.product.productdto.PerfumeDto;
+import com.example.silverpear.product.productdto.ProductDto;
+import org.springframework.stereotype.Component;
+import java.util.List;
+import java.util.ArrayList;
+
+@Component
+<span class="nc" id="L12">public class PerfumeMapper extends ProductMapper {</span>
+
+    @Override
+    protected ProductDto createDto(Product product) {
+<span class="nc" id="L16">        return new PerfumeDto();</span>
+    }
+
+    @Override
+    public PerfumeDto toDto(Product product) {
+<span class="nc bnc" id="L21" title="All 2 branches missed.">        if (!(product instanceof Perfume)) {</span>
+<span class="nc" id="L22">            return (PerfumeDto) super.toDto(product);</span>
+        }
+
+<span class="nc" id="L25">        Perfume perfume = (Perfume) product;</span>
+<span class="nc" id="L26">        PerfumeDto dto = new PerfumeDto();</span>
+<span class="nc" id="L27">        fillBaseFields(perfume, dto);</span>
+
+<span class="nc" id="L29">        dto.setTopNotes(perfume.getTopNotes());</span>
+<span class="nc" id="L30">        dto.setMiddleNotes(perfume.getMiddleNotes());</span>
+<span class="nc" id="L31">        dto.setBaseNotes(perfume.getBaseNotes());</span>
+
+<span class="nc" id="L33">        return dto;</span>
+    }
+
+    public Perfume toEntity(PerfumeDto dto) {
+<span class="nc bnc" id="L37" title="All 2 branches missed.">        if (dto == null) {</span>
+<span class="nc" id="L38">            return null;</span>
+        }
+
+<span class="nc" id="L41">        Perfume perfume = new Perfume();</span>
+<span class="nc" id="L42">        fillBaseFieldsToEntity(perfume, dto);</span>
+
+<span class="nc" id="L44">        perfume.setTopNotes(dto.getTopNotes());</span>
+<span class="nc" id="L45">        perfume.setMiddleNotes(dto.getMiddleNotes());</span>
+<span class="nc" id="L46">        perfume.setBaseNotes(dto.getBaseNotes());</span>
+
+<span class="nc" id="L48">        return perfume;</span>
+    }
+
+    public List&lt;PerfumeDto&gt; toPerfumeDtoList(List&lt;Perfume&gt; perfumes) {
+<span class="nc" id="L52">        List&lt;PerfumeDto&gt; list = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        if (perfumes != null) {</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">            for (Perfume p : perfumes) {</span>
+<span class="nc" id="L55">                list.add(toDto(p));</span>
+<span class="nc" id="L56">            }</span>
+        }
+<span class="nc" id="L58">        return list;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

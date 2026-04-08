@@ -23,8 +23,11 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,7 +58,7 @@ class ProductServiceTest {
         when(cacheService.get(any(CacheKey.class))).thenReturn(null);
         when(productRepository.findAll()).thenReturn(products);
         assertSame(products, productService.findAll());
-        verify(cacheService).put(any(CacheKey.class), products);
+        verify(cacheService).put(any(CacheKey.class), eq(products));
     }
 
     @Test
@@ -69,7 +72,7 @@ class ProductServiceTest {
         when(cacheService.get(any(CacheKey.class))).thenReturn(null);
         when(productRepository.findAll(pageable)).thenReturn(page);
         assertSame(page, productService.findAll(pageable));
-        verify(cacheService).put(any(CacheKey.class), page);
+        verify(cacheService).put(any(CacheKey.class), eq(page));
     }
 
     @Test
@@ -93,7 +96,7 @@ class ProductServiceTest {
         when(cacheService.get(any(CacheKey.class))).thenReturn(null);
         when(productRepository.findById(2L)).thenReturn(Optional.of(repoProduct));
         assertSame(repoProduct, productService.findById(2L));
-        verify(cacheService).put(any(CacheKey.class), repoProduct);
+        verify(cacheService).put(any(CacheKey.class), eq(repoProduct));
 
         when(cacheService.get(any(CacheKey.class))).thenReturn(null);
         when(productRepository.findById(3L)).thenReturn(Optional.empty());
@@ -150,6 +153,12 @@ class ProductServiceTest {
         List<Product> range = List.of(new Product());
         when(productRepository.findInRange(10.0, 20.0)).thenReturn(range);
         assertSame(range, productService.searchInRange(10.0, 20.0));
+    }
+
+    @Test
+    void searchProducts_allNull_doesNotQueryRepository() {
+        assertTrue(productService.searchProducts(null, null, null).isEmpty());
+        verifyNoInteractions(productRepository);
     }
 
     @Test

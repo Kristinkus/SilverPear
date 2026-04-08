@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FavoriteService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SilverPear</a> &gt; <a href="index.source.html" class="el_package">com.example.silverpear.service</a> &gt; <span class="el_source">FavoriteService.java</span></div><h1>FavoriteService.java</h1><pre class="source lang-java linenums">package com.example.silverpear.service;
+
+import com.example.silverpear.product.entity.Product;
+import com.example.silverpear.product.entity.User;
+import com.example.silverpear.repository.FavoriteRepository;
+import com.example.silverpear.repository.ProductRepository;
+import com.example.silverpear.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Set;
+
+@Service
+@RequiredArgsConstructor
+public class FavoriteService {
+
+    private final FavoriteRepository favoriteRepository;
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
+
+    @Transactional
+    public void addFavorite(Long userId, Long productId) {
+<span class="fc" id="L24">        User user = userRepository.findById(userId)</span>
+<span class="fc" id="L25">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</span>
+<span class="fc" id="L26">        Product product = productRepository.findById(productId)</span>
+<span class="fc" id="L27">                .orElseThrow(() -&gt; new RuntimeException(&quot;Product not found&quot;));</span>
+
+<span class="fc" id="L29">        user.getFavorites().add(product);</span>
+<span class="fc" id="L30">        userRepository.save(user);</span>
+<span class="fc" id="L31">    }</span>
+
+    @Transactional
+    public void removeFavorite(Long userId, Long productId) {
+<span class="fc" id="L35">        User user = userRepository.findById(userId)</span>
+<span class="fc" id="L36">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</span>
+<span class="fc" id="L37">        Product product = productRepository.findById(productId)</span>
+<span class="fc" id="L38">                .orElseThrow(() -&gt; new RuntimeException(&quot;Product not found&quot;));</span>
+
+<span class="fc" id="L40">        user.getFavorites().remove(product);</span>
+<span class="fc" id="L41">        userRepository.save(user);</span>
+<span class="fc" id="L42">    }</span>
+
+    public Set&lt;Product&gt; getFavorites(Long userId) {
+<span class="fc" id="L45">        return favoriteRepository.findFavoritesByUserId(userId);</span>
+    }
+
+    public boolean isFavorite(Long userId, Long productId) {
+<span class="fc" id="L49">        return favoriteRepository.findFavoritesByUserId(userId)</span>
+<span class="fc" id="L50">                .stream().anyMatch(p -&gt; p.getId().equals(productId));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

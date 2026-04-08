@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CacheKey.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SilverPear</a> &gt; <a href="index.source.html" class="el_package">com.example.silverpear.cache</a> &gt; <span class="el_source">CacheKey.java</span></div><h1>CacheKey.java</h1><pre class="source lang-java linenums">package com.example.silverpear.cache;
+
+import lombok.Data;
+
+import java.util.Objects;
+
+
+@Data
+public class CacheKey {
+
+    private final String entityType;
+
+    private final String method;
+
+    private final String params;
+
+    private final int page;
+    private final int size;
+    private final String sortBy;
+    private final String sortDirection;
+
+    public CacheKey(String entityType, String method, String params) {
+<span class="nc" id="L23">        this(entityType, method, params, 0, 0, &quot;&quot;, &quot;&quot;);</span>
+<span class="nc" id="L24">    }</span>
+
+    public CacheKey(String entityType, String method, String params,
+<span class="fc" id="L27">                    int page, int size, String sortBy, String sortDirection) {</span>
+<span class="fc" id="L28">        this.entityType = entityType;</span>
+<span class="fc" id="L29">        this.method = method;</span>
+<span class="fc" id="L30">        this.params = params;</span>
+<span class="fc" id="L31">        this.page = page;</span>
+<span class="fc" id="L32">        this.size = size;</span>
+<span class="fc" id="L33">        this.sortBy = sortBy;</span>
+<span class="fc" id="L34">        this.sortDirection = sortDirection;</span>
+<span class="fc" id="L35">    }</span>
+
+    public static CacheKey forFindById(String entityType, Long id) {
+<span class="nc" id="L38">        return new CacheKey(entityType, &quot;findById&quot;, &quot;id=&quot; + id);</span>
+    }
+
+    public static CacheKey forFindAll(String entityType) {
+<span class="nc" id="L42">        return new CacheKey(entityType, &quot;findAll&quot;, &quot;&quot;);</span>
+    }
+
+    public static CacheKey forSearch(String entityType, String... searchParams) {
+<span class="nc" id="L46">        String params = String.join(&quot;|&quot;, searchParams);</span>
+<span class="nc" id="L47">        return new CacheKey(entityType, &quot;search&quot;, params);</span>
+    }
+
+    @Override
+    public boolean equals(Object o) {
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if (this == o) {</span>
+<span class="nc" id="L53">            return true;</span>
+        }
+<span class="nc bnc" id="L55" title="All 4 branches missed.">        if (o == null || getClass() != o.getClass()) {</span>
+<span class="nc" id="L56">            return false;</span>
+        }
+
+<span class="nc" id="L59">        CacheKey cacheKey = (CacheKey) o;</span>
+
+<span class="nc bnc" id="L61" title="All 4 branches missed.">        return page == cacheKey.page &amp;&amp;</span>
+                size == cacheKey.size &amp;&amp;
+<span class="nc bnc" id="L63" title="All 2 branches missed.">                Objects.equals(entityType, cacheKey.entityType) &amp;&amp;</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">                Objects.equals(method, cacheKey.method) &amp;&amp;</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">                Objects.equals(params, cacheKey.params) &amp;&amp;</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">                Objects.equals(sortBy, cacheKey.sortBy) &amp;&amp;</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">                Objects.equals(sortDirection, cacheKey.sortDirection);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L72">        return Objects.hash(entityType, method, params, page, size, sortBy, sortDirection);</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="fc" id="L77">        return String.format(&quot;%s:%s:%s:%d:%d:%s:%s&quot;,</span>
+<span class="fc" id="L78">                entityType, method, params, page, size, sortBy, sortDirection);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

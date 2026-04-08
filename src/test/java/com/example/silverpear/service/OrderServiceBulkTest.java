@@ -81,6 +81,27 @@ class OrderServiceBulkTest {
     }
 
     @Test
+    void createOrderBulkWithoutTransaction_success_evictsCache() {
+        User user = new User();
+        user.setId(1L);
+        Product p1 = product(10L, 100.0);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(productRepository.findById(10L)).thenReturn(Optional.of(p1));
+        when(orderRepository.saveAndFlush(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<Order> created = orderService.createOrderBulkWithoutTransaction(bulkRequest(1L, List.of(
+                orderRequest(List.of(10L), List.of(3))
+        )));
+
+        assertEquals(1, created.size());
+        assertEquals(300.0, created.getFirst().getTotalAmount());
+        verify(orderRepository, times(1)).saveAndFlush(any(Order.class));
+        verify(cacheService).evictByPattern("Order:findAll");
+        verify(cacheService).evictByPattern("Order:findByStatus");
+    }
+
+    @Test
     void createOrderBulkWithoutTransaction_whenSecondSaveFails_noCacheEvict() {
         User user = new User();
         user.setId(1L);
@@ -91,7 +112,7 @@ class OrderServiceBulkTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(productRepository.findById(10L)).thenReturn(Optional.of(p1));
         when(productRepository.findById(20L)).thenReturn(Optional.of(p2));
-        when(orderRepository.save(any(Order.class)))
+        when(orderRepository.saveAndFlush(any(Order.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0))
                 .thenThrow(new RuntimeException("DB failure on second save"));
 
@@ -104,7 +125,7 @@ class OrderServiceBulkTest {
         );
 
         assertEquals("DB failure on second save", ex.getMessage());
-        verify(orderRepository, times(2)).save(any(Order.class));
+        verify(orderRepository, times(2)).saveAndFlush(any(Order.class));
         verify(cacheService, never()).evictByPattern(any());
     }
 

@@ -79,7 +79,7 @@ class CosmeticsServiceTest {
         Cosmetics updated = cosmeticsService.updateCosmetics(1L, incoming);
         assertEquals("n", updated.getName());
         assertEquals("rx", updated.getPrescription());
-        assertEquals("dry", updated.getSkinType());
+        assertEquals(SkinType.DRY, updated.getSkinType());
         assertEquals("matte", updated.getFinish());
     }
 

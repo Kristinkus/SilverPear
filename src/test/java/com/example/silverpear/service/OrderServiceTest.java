@@ -13,12 +13,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.Optional;
@@ -54,16 +54,27 @@ class OrderServiceTest {
     }
 
     @Test
-    void createOrderWithTransaction_delegatesToBulkTransactional() {
-        OrderService spy = Mockito.spy(orderService);
-        Order expected = new Order();
-        when(spy.createOrderBulkTransactional(any())).thenReturn(List.of(expected));
+    void createOrderWithTransaction_buildsBulkAndReturnsFirstOrder() {
+        User user = new User();
+        user.setId(10L);
+        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+
+        Product product = new Product();
+        product.setId(1L);
+        product.setSalePrice(25.0);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         OrderRequest request = new OrderRequest();
         request.setProductIds(List.of(1L));
-        request.setQuantities(List.of(1));
-        Order actual = spy.createOrderWithTransaction(10L, request);
-        assertSame(expected, actual);
+        request.setQuantities(List.of(2));
+
+        Order actual = orderService.createOrderWithTransaction(10L, request);
+
+        assertSame(user, actual.getUser());
+        assertEquals(50.0, actual.getTotalAmount(), 0.001);
+        verify(orderRepository).save(any(Order.class));
     }
 
     @Test
@@ -124,6 +135,14 @@ class OrderServiceTest {
         when(cacheService.get(any())).thenReturn(null);
         when(orderRepository.findById(100L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> orderService.updateOrder(100L, request));
+
+        Order existing2 = new Order();
+        when(cacheService.get(any())).thenReturn(existing2);
+        OrderRequest request2 = new OrderRequest();
+        request2.setProductIds(List.of(404L));
+        request2.setQuantities(List.of(1));
+        when(productRepository.findById(404L)).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> orderService.updateOrder(12L, request2));
     }
 
     @Test
@@ -150,7 +169,7 @@ class OrderServiceTest {
 
     @Test
     void getOrdersPage_cachedAndRepo() {
-        Pageable pageable = PageRequest.of(0, 2);
+        Pageable pageable = PageRequest.of(0, 2, Sort.by("id"));
         Page<Order> cached = new PageImpl<>(List.of(new Order()));
         when(cacheService.get(any())).thenReturn(cached);
         assertSame(cached, orderService.getOrdersPage(pageable));

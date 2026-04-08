@@ -83,6 +83,21 @@ class FavoriteServiceTest {
     }
 
     @Test
+    void removeFavorite_userNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> favoriteService.removeFavorite(1L, 2L));
+    }
+
+    @Test
+    void removeFavorite_productNotFound() {
+        User user = new User();
+        user.setFavorites(new HashSet<>());
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(productRepository.findById(2L)).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> favoriteService.removeFavorite(1L, 2L));
+    }
+
+    @Test
     void getFavorites_success() {
         Set<Product> favorites = Set.of(new Product());
         when(favoriteRepository.findFavoritesByUserId(1L)).thenReturn(favorites);

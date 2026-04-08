@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SilverPear</a> &gt; <a href="index.source.html" class="el_package">com.example.silverpear.controller</a> &gt; <span class="el_source">UserController.java</span></div><h1>UserController.java</h1><pre class="source lang-java linenums">package com.example.silverpear.controller;
+
+import com.example.silverpear.api.UserApi;
+import com.example.silverpear.product.entity.Order;
+import com.example.silverpear.product.entity.User;
+import com.example.silverpear.product.mapper.OrderForUserMapper;
+import com.example.silverpear.product.productdto.OrderForUserDto;
+import com.example.silverpear.product.productdto.OrderRequest;
+import com.example.silverpear.product.productdto.UserRequest;
+import com.example.silverpear.product.productdto.UserResponse;
+import com.example.silverpear.product.productdto.UserWithOrdersDto;
+import com.example.silverpear.service.OrderService;
+import com.example.silverpear.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequiredArgsConstructor
+public class UserController implements UserApi {
+
+    private final UserService userService;
+    private final OrderService orderService;
+    private final OrderForUserMapper orderForUserMapper;
+
+    @Override
+    public ResponseEntity&lt;List&lt;User&gt;&gt; getAllUsers() {
+<span class="nc" id="L31">        return ResponseEntity.ok(userService.getAllUsers());</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;UserResponse&gt; getUserById(Long id) {
+<span class="nc" id="L36">        return ResponseEntity.ok(userService.getUserById(id));</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;UserWithOrdersDto&gt; getUserWithOrders(Long id) {
+<span class="nc" id="L41">        return ResponseEntity.ok(userService.getUserWithOrders(id));</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;UserResponse&gt; createUser(UserRequest request) {
+<span class="nc" id="L46">        UserResponse created = userService.createUser(request);</span>
+<span class="nc" id="L47">        return ResponseEntity.status(HttpStatus.CREATED).body(created);</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;UserResponse&gt; updateUser(Long id, UserRequest request) {
+<span class="nc" id="L52">        UserResponse updated = userService.updateUser(id, request);</span>
+<span class="nc" id="L53">        return ResponseEntity.ok(updated);</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Void&gt; deleteUser(Long id) {
+<span class="nc" id="L58">        userService.deleteUser(id);</span>
+<span class="nc" id="L59">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;OrderForUserDto&gt; createOrderForUser(Long userId, OrderRequest request) {
+<span class="nc" id="L64">        Order order = orderService.createOrderWithTransaction(userId, request);</span>
+<span class="nc" id="L65">        return ResponseEntity.status(HttpStatus.CREATED)</span>
+<span class="nc" id="L66">                .body(orderForUserMapper.toDto(order));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

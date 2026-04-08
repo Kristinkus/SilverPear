@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SilverPear</a> &gt; <a href="index.source.html" class="el_package">com.example.silverpear.controller</a> &gt; <span class="el_source">ProductController.java</span></div><h1>ProductController.java</h1><pre class="source lang-java linenums">package com.example.silverpear.controller;
+
+import com.example.silverpear.api.ProductApi;
+import com.example.silverpear.product.entity.Product;
+import com.example.silverpear.product.mapper.ProductMapper;
+import com.example.silverpear.product.productdto.ProductDto;
+import com.example.silverpear.service.ProductService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequiredArgsConstructor
+public class ProductController implements ProductApi {
+
+    private final ProductService productService;
+    private final ProductMapper productMapper;
+
+    @Override
+    public ResponseEntity&lt;List&lt;ProductDto&gt;&gt; getAllProducts() {
+<span class="nc" id="L29">        List&lt;Product&gt; products = productService.findAll();</span>
+<span class="nc" id="L30">        List&lt;ProductDto&gt; productDto = productMapper.toDtoList(products);</span>
+<span class="nc" id="L31">        return ResponseEntity.ok(productDto);</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;ProductDto&gt; getProductById(Long id) {
+        try {
+<span class="nc" id="L37">            Product product = productService.findById(id);</span>
+<span class="nc" id="L38">            return ResponseEntity.ok(productMapper.toDto(product));</span>
+<span class="nc" id="L39">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L40">            throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Product not found with id: &quot; + id);</span>
+        }
+    }
+
+    @Override
+    public ResponseEntity&lt;ProductDto&gt; createProduct(ProductDto productDto) {
+<span class="nc" id="L46">        Product product = productMapper.toEntity(productDto);</span>
+<span class="nc" id="L47">        Product savedProduct = productService.create(product);</span>
+<span class="nc" id="L48">        return ResponseEntity.status(HttpStatus.CREATED).body(productMapper.toDto(savedProduct));</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;List&lt;ProductDto&gt;&gt; searchProducts(String name, String brand, String category) {
+<span class="nc" id="L53">        List&lt;Product&gt; products = productService.searchProducts(name, brand, category);</span>
+<span class="nc" id="L54">        return ResponseEntity.ok(productMapper.toDtoList(products));</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Void&gt; deleteProductById(Long id) {
+        try {
+<span class="nc" id="L60">            productService.deleteById(id);</span>
+<span class="nc" id="L61">            return ResponseEntity.noContent().build();</span>
+<span class="nc" id="L62">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L63">            throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Product not found with id: &quot; + id);</span>
+        }
+    }
+
+    @Override
+    public ResponseEntity&lt;ProductDto&gt; updateProduct(Long id, ProductDto dto) {
+<span class="nc" id="L69">        Product product = productMapper.toEntity(dto);</span>
+<span class="nc" id="L70">        product.setId(id);</span>
+<span class="nc" id="L71">        Product updatedProduct = productService.update(product.getId(), product);</span>
+<span class="nc" id="L72">        return ResponseEntity.ok(productMapper.toDto(updatedProduct));</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;ProductDto&gt; patchProduct(Long id, Map&lt;String, Object&gt; updates) {
+<span class="nc" id="L77">        Product updatedProduct = productService.patchUpdate(id, updates);</span>
+<span class="nc" id="L78">        return ResponseEntity.ok(productMapper.toDto(updatedProduct));</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;List&lt;ProductDto&gt;&gt; getProductsInRange(Double lowPrice, Double highPrice) {
+<span class="nc" id="L83">        List&lt;Product&gt; productsInRange = productService.searchInRange(lowPrice, highPrice);</span>
+<span class="nc" id="L84">        return ResponseEntity.ok(productMapper.toDtoList(productsInRange));</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Page&lt;ProductDto&gt;&gt; getProductsPaged(int page, int size) {
+<span class="nc" id="L89">        Pageable pageable = PageRequest.of(page, size);</span>
+<span class="nc" id="L90">        Page&lt;Product&gt; productPage = productService.findAll(pageable);</span>
+<span class="nc" id="L91">        Page&lt;ProductDto&gt; dtoPage = productPage.map(productMapper::toDto);</span>
+<span class="nc" id="L92">        return ResponseEntity.ok(dtoPage);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SilverPear</a> &gt; <a href="index.source.html" class="el_package">com.example.silverpear.errors</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.example.silverpear.errors;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+<span class="nc" id="L27">@Slf4j</span>
+@RestControllerAdvice
+<span class="nc" id="L29">public class GlobalExceptionHandler {</span>
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleResponseStatusException(
+            ResponseStatusException ex,
+            HttpServletRequest request) {
+<span class="nc" id="L35">        int code = ex.getStatusCode().value();</span>
+<span class="nc" id="L36">        HttpStatus resolved = HttpStatus.resolve(code);</span>
+<span class="nc" id="L37">        String reason = ex.getReason();</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">        if (reason == null) {</span>
+<span class="nc bnc" id="L39" title="All 2 branches missed.">            reason = resolved != null ? resolved.getReasonPhrase() : &quot;Ошибка&quot;;</span>
+        }
+<span class="nc" id="L41">        ErrorResponse body = build(code, reason, List.of(reason), request);</span>
+<span class="nc" id="L42">        return ResponseEntity.status(ex.getStatusCode()).body(body);</span>
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
+<span class="nc" id="L49">        List&lt;String&gt; errors = collectBindingErrors(ex.getBindingResult());</span>
+<span class="nc" id="L50">        return ResponseEntity.badRequest().body(build(</span>
+                HttpStatus.BAD_REQUEST,
+                &quot;Плохой запрос&quot;,
+                errors,
+                request));
+    }
+
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleBindException(
+            BindException ex,
+            HttpServletRequest request) {
+<span class="nc" id="L61">        List&lt;String&gt; errors = collectBindingErrors(ex.getBindingResult());</span>
+<span class="nc" id="L62">        return ResponseEntity.badRequest().body(build(</span>
+                HttpStatus.BAD_REQUEST,
+                &quot;Ошибка привязки данных&quot;,
+                errors,
+                request));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleConstraintViolationException(
+            ConstraintViolationException ex,
+            HttpServletRequest request) {
+<span class="nc" id="L73">        List&lt;String&gt; errors = ex.getConstraintViolations().stream()</span>
+<span class="nc" id="L74">                .map(v -&gt; v.getPropertyPath() + &quot;: &quot; + v.getMessage())</span>
+<span class="nc" id="L75">                .toList();</span>
+<span class="nc" id="L76">        return ResponseEntity.badRequest().body(build(</span>
+                HttpStatus.BAD_REQUEST,
+                &quot;Ошибка валидации&quot;,
+                errors,
+                request));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        String detail = ex.getMostSpecificCause() != null</span>
+<span class="nc" id="L88">                ? ex.getMostSpecificCause().getMessage()</span>
+<span class="nc" id="L89">                : ex.getMessage();</span>
+<span class="nc" id="L90">        return ResponseEntity.badRequest().body(build(</span>
+                HttpStatus.BAD_REQUEST,
+                &quot;Некорректное тело запроса&quot;,
+<span class="nc bnc" id="L93" title="All 2 branches missed.">                List.of(detail != null ? detail : &quot;JSON или формат данных неверен&quot;),</span>
+                request));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleMissingServletRequestParameterException(
+            MissingServletRequestParameterException ex,
+            HttpServletRequest request) {
+<span class="nc" id="L101">        String msg = &quot;Отсутствует обязательный параметр: &quot; + ex.getParameterName();</span>
+<span class="nc" id="L102">        return ResponseEntity.badRequest().body(build(</span>
+                HttpStatus.BAD_REQUEST,
+                &quot;Плохой запрос&quot;,
+<span class="nc" id="L105">                List.of(msg),</span>
+                request));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request) {
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        String name = ex.getName() != null ? ex.getName() : &quot;параметр&quot;;</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        String required = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : &quot;?&quot;;</span>
+<span class="nc" id="L115">        String msg = &quot;Параметр «&quot; + name + &quot;» должен быть типа &quot; + required;</span>
+<span class="nc" id="L116">        return ResponseEntity.badRequest().body(build(</span>
+                HttpStatus.BAD_REQUEST,
+                &quot;Неверный тип параметра&quot;,
+<span class="nc" id="L119">                List.of(msg),</span>
+                request));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleIllegalArgumentException(
+            IllegalArgumentException ex,
+            HttpServletRequest request) {
+<span class="nc bnc" id="L127" title="All 2 branches missed.">        String msg = ex.getMessage() != null ? ex.getMessage() : &quot;Недопустимый аргумент&quot;;</span>
+<span class="nc" id="L128">        return ResponseEntity.badRequest().body(build(</span>
+                HttpStatus.BAD_REQUEST,
+                &quot;Некорректные данные&quot;,
+<span class="nc" id="L131">                List.of(msg),</span>
+                request));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleNoResourceFoundException(
+            NoResourceFoundException ex,
+            HttpServletRequest request) {
+<span class="nc" id="L139">        String msg = &quot;Ресурс не найден: &quot; + ex.getResourcePath();</span>
+<span class="nc" id="L140">        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(build(</span>
+                HttpStatus.NOT_FOUND,
+                &quot;Не найдено&quot;,
+<span class="nc" id="L143">                List.of(msg),</span>
+                request));
+    }
+
+    @ExceptionHandler(HttpClientErrorException.NotFound.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleHttpClientErrorNotFound(
+            HttpClientErrorException.NotFound ex,
+            HttpServletRequest request) {
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        String msg = ex.getMessage() != null ? ex.getMessage() : &quot;Ресурс не найден&quot;;</span>
+<span class="nc" id="L152">        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(build(</span>
+                HttpStatus.NOT_FOUND,
+                &quot;Ресурс не найден&quot;,
+<span class="nc" id="L155">                List.of(msg),</span>
+                request));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleHttpRequestMethodNotSupportedException(
+            HttpRequestMethodNotSupportedException ex,
+            HttpServletRequest request) {
+        String detail;
+<span class="nc bnc" id="L164" title="All 4 branches missed.">        if (ex.getSupportedHttpMethods() != null &amp;&amp; !ex.getSupportedHttpMethods().isEmpty()) {</span>
+<span class="nc" id="L165">            detail = &quot;Допустимые методы: &quot; + String.join(&quot;, &quot;,</span>
+<span class="nc" id="L166">                    ex.getSupportedHttpMethods().stream()</span>
+<span class="nc" id="L167">                            .map(HttpMethod::name)</span>
+<span class="nc" id="L168">                            .toList());</span>
+        } else {
+<span class="nc bnc" id="L170" title="All 2 branches missed.">            detail = ex.getMessage() != null ? ex.getMessage() : &quot;&quot;;</span>
+        }
+<span class="nc" id="L172">        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(build(</span>
+                HttpStatus.METHOD_NOT_ALLOWED,
+                &quot;Метод не поддерживается&quot;,
+<span class="nc" id="L175">                List.of(detail),</span>
+                request));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleDataIntegrityViolation(
+            DataIntegrityViolationException ex,
+            HttpServletRequest request) {
+<span class="nc" id="L183">        log.warn(&quot;Нарушение ограничения БД: {}&quot;, ex.getMostSpecificCause().getMessage());</span>
+<span class="nc" id="L184">        String msg = &quot;Конфликт данных: нарушено ограничение уникальности или целостности&quot;;</span>
+<span class="nc" id="L185">        return ResponseEntity.status(HttpStatus.CONFLICT).body(build(</span>
+                HttpStatus.CONFLICT,
+                msg,
+<span class="nc" id="L188">                List.of(msg),</span>
+                request));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleException(Exception ex, HttpServletRequest request) {
+<span class="nc" id="L194">        log.error(&quot;Необработанное исключение&quot;, ex);</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">        String msg = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();</span>
+<span class="nc" id="L196">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(build(</span>
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                &quot;Внутренняя ошибка сервера&quot;,
+<span class="nc" id="L199">                List.of(msg),</span>
+                request));
+    }
+
+    private List&lt;String&gt; collectBindingErrors(BindingResult result) {
+<span class="nc" id="L204">        List&lt;String&gt; errors = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L205">        result.getFieldErrors().forEach(</span>
+<span class="nc" id="L206">                error -&gt; errors.add(error.getField() + &quot;: &quot; + error.getDefaultMessage()));</span>
+<span class="nc" id="L207">        result.getGlobalErrors().forEach(</span>
+<span class="nc" id="L208">                error -&gt; errors.add(error.getDefaultMessage()));</span>
+<span class="nc" id="L209">        return errors;</span>
+    }
+
+    private ErrorResponse build(
+            HttpStatus status,
+            String message,
+            List&lt;String&gt; errors,
+            HttpServletRequest request) {
+<span class="nc" id="L217">        return build(status.value(), message, errors, request);</span>
+    }
+
+    private ErrorResponse build(
+            int statusCode,
+            String message,
+            List&lt;String&gt; errors,
+            HttpServletRequest request) {
+<span class="nc" id="L225">        return ErrorResponse.builder()</span>
+<span class="nc" id="L226">                .message(message)</span>
+<span class="nc" id="L227">                .errors(errors)</span>
+<span class="nc" id="L228">                .status(statusCode)</span>
+<span class="nc" id="L229">                .path(request.getRequestURL().toString())</span>
+<span class="nc" id="L230">                .timestamp(LocalDateTime.now())</span>
+<span class="nc" id="L231">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

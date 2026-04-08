@@ -21,6 +21,13 @@ class CacheServiceTest {
     }
 
     @Test
+    void evict_whenKeyAbsent_doesNotFail() {
+        CacheKey key = new CacheKey("Product", "findById", "id=99", 0, 0, "", "");
+        cacheService.evict(key);
+        assertNull(cacheService.get(key));
+    }
+
+    @Test
     void get_whenNoValue_returnsNull() {
         CacheKey key = new CacheKey("Order", "findById", "id=2", 0, 0, "", "");
         assertNull(cacheService.get(key));
@@ -36,6 +43,6 @@ class CacheServiceTest {
         cacheService.evictByPattern("Order");
 
         assertNull(cacheService.get(key1));
-        assertEquals(2, cacheService.get(key2));
+        assertEquals(Integer.valueOf(2), cacheService.get(key2));
     }
 }

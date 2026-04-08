@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Product.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SilverPear</a> &gt; <a href="index.source.html" class="el_package">com.example.silverpear.product.entity</a> &gt; <span class="el_source">Product.java</span></div><h1>Product.java</h1><pre class="source lang-java linenums">package com.example.silverpear.product.entity;
+
+import com.example.silverpear.enums.Gender;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.List;
+import java.util.Set;
+
+@Entity
+@Table(name = &quot;products&quot;)
+@Inheritance(strategy = InheritanceType.JOINED)
+@Getter
+@Setter
+<span class="fc" id="L30">public class Product {</span>
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = &quot;name&quot;, nullable = false)
+    private String name;
+
+    @Column(name = &quot;brand&quot;, nullable = false)
+    private String brand;
+
+    @Column(name = &quot;description&quot;)
+    private String description;
+
+    @Column(name = &quot;category&quot;, nullable = false)
+    private String category;
+
+    @Column(name = &quot;salePrice&quot;, nullable = false)
+    private double salePrice;
+
+    @Column(name = &quot;inStock&quot;, nullable = false)
+    private boolean inStock;
+
+    @Column(name = &quot;Type&quot;)
+    private String type;
+
+    @Column(name = &quot;gender&quot;)
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
+    @Column(name = &quot;volume&quot;)
+    private double volume;
+
+
+    @OneToMany(mappedBy = &quot;product&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List&lt;OrderItem&gt; orderItems;
+
+
+    @ManyToMany(mappedBy = &quot;favorites&quot;)
+    @JsonIgnore
+    private Set&lt;User&gt; favoritedBy;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
