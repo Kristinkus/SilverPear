@@ -3,7 +3,6 @@ package com.example.silverpear.service;
 import com.example.silverpear.product.entity.Order;
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.product.entity.User;
-import com.example.silverpear.product.mapper.OrderForUserMapper;
 import com.example.silverpear.product.productdto.BulkOrderRequest;
 import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.repository.OrderRepository;
@@ -38,8 +37,6 @@ class OrderServiceBulkTest {
     @Mock
     private ProductRepository productRepository;
     @Mock
-    private OrderForUserMapper orderForUserMapper;
-    @Mock
     private CacheService cacheService;
 
     private OrderService orderService;
@@ -50,7 +47,6 @@ class OrderServiceBulkTest {
                 orderRepository,
                 userRepository,
                 productRepository,
-                orderForUserMapper,
                 cacheService,
                 null
         );
@@ -152,7 +148,7 @@ class OrderServiceBulkTest {
     }
 
     @Test
-    void createOrderBulk_legacyMethod_delegatesToBulk() {
+    void createOrderBulkTransactional_singleOrder_totalAndCacheEviction() {
         User user = new User();
         user.setId(1L);
         Product p1 = product(10L, 150.0);
@@ -161,7 +157,7 @@ class OrderServiceBulkTest {
         when(productRepository.findById(10L)).thenReturn(Optional.of(p1));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        List<Order> created = orderService.createOrderBulk(bulkRequest(1L, List.of(
+        List<Order> created = orderService.createOrderBulkTransactional(bulkRequest(1L, List.of(
                 orderRequest(List.of(10L), List.of(2))
         )));
 

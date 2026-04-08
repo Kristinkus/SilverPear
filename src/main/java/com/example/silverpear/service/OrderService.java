@@ -7,7 +7,6 @@ import com.example.silverpear.product.entity.Order;
 import com.example.silverpear.product.entity.OrderItem;
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.product.entity.User;
-import com.example.silverpear.product.mapper.OrderForUserMapper;
 import com.example.silverpear.product.productdto.BulkOrderRequest;
 import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.repository.OrderRepository;
@@ -36,26 +35,22 @@ public class OrderService {
     private static final String CACHE_ENTITY_ORDER = "Order";
     private static final String CACHE_KEY_FIND_ALL = CACHE_ENTITY_ORDER + ":findAll";
     private static final String CACHE_KEY_FIND_BY_STATUS = CACHE_ENTITY_ORDER + ":findByStatus";
-    private static final String CACHE_KEY_FIND_BY_ID = CACHE_ENTITY_ORDER + ":findById";
     private static final String CACHE_METHOD_FIND_BY_ID = "findById";
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
-    private final OrderForUserMapper orderForUserMapper;
     private final CacheService cacheService;
     private final OrderService self;
 
     public OrderService(OrderRepository orderRepository,
                         UserRepository userRepository,
                         ProductRepository productRepository,
-                        OrderForUserMapper orderForUserMapper,
                         CacheService cacheService,
                         @Lazy OrderService self) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
-        this.orderForUserMapper = orderForUserMapper;
         this.cacheService = cacheService;
         this.self = self != null ? self : this;
     }
@@ -280,16 +275,6 @@ public class OrderService {
         cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);
         log.info("Cache invalidated after bulk order creation");
         return result;
-    }
-
-    /**
-     * @deprecated Use {@link #createOrderBulkTransactional(BulkOrderRequest)} instead.
-     */
-    // TODO: remove after all callers switch to createOrderBulkTransactional
-    @Deprecated(since = "0.0.1", forRemoval = true)
-    @Transactional
-    public List<Order> createOrderBulk(BulkOrderRequest request) {
-        return self.createOrderBulkTransactional(request);
     }
 
     private Order buildOrder(User user, OrderRequest request) {

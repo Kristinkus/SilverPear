@@ -84,9 +84,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
             HttpMessageNotReadableException ex,
             HttpServletRequest request) {
-        String detail = ex.getMostSpecificCause() != null
-                ? ex.getMostSpecificCause().getMessage()
-                : ex.getMessage();
+        String causeMsg = ex.getMostSpecificCause().getMessage();
+        String detail = causeMsg != null ? causeMsg : ex.getMessage();
         return ResponseEntity.badRequest().body(build(
                 HttpStatus.BAD_REQUEST,
                 "Некорректное тело запроса",
@@ -110,8 +109,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(
             MethodArgumentTypeMismatchException ex,
             HttpServletRequest request) {
-        String name = ex.getName() != null ? ex.getName() : "параметр";
-        String required = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "?";
+        String name = ex.getName();
+        Class<?> requiredType = ex.getRequiredType();
+        String required = requiredType != null ? requiredType.getSimpleName() : "?";
         String msg = "Параметр «" + name + "» должен быть типа " + required;
         return ResponseEntity.badRequest().body(build(
                 HttpStatus.BAD_REQUEST,

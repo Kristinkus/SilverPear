@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -46,22 +45,20 @@ public interface UserApi {
 
     @PostMapping
     @Operation(summary = "Создать пользователя")
-    @ApiResponses({ @ApiResponse(responseCode = "201", description = "Создано"),
-                    @ApiResponse(responseCode = "400", description = "Ошибка валидации",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "409", description = "Логин или email уже заняты",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
+    @ApiResponse(responseCode = "201", description = "Создано")
+    @ApiResponse(responseCode = "400", description = "Ошибка валидации",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "409", description = "Логин или email уже заняты",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest request);
 
     @PutMapping("/{id}")
     @Operation(summary = "Обновить пользователя")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "Обновлено"),
-                   @ApiResponse(responseCode = "400", description = "Ошибка валидации",
-                   content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                   @ApiResponse(responseCode = "409", description = "Конфликт данных",
-                   content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
+    @ApiResponse(responseCode = "200", description = "Обновлено")
+    @ApiResponse(responseCode = "400", description = "Ошибка валидации",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "409", description = "Конфликт данных",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     ResponseEntity<UserResponse> updateUser(
             @Parameter(description = "Id пользователя") @PathVariable Long id,
             @Valid @RequestBody UserRequest request);

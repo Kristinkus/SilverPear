@@ -4,7 +4,6 @@ import com.example.silverpear.enums.OrderStatus;
 import com.example.silverpear.product.entity.Order;
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.product.entity.User;
-import com.example.silverpear.product.mapper.OrderForUserMapper;
 import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.repository.OrderRepository;
 import com.example.silverpear.repository.ProductRepository;
@@ -42,15 +41,13 @@ class OrderServiceTest {
     @Mock
     private ProductRepository productRepository;
     @Mock
-    private OrderForUserMapper orderForUserMapper;
-    @Mock
     private CacheService cacheService;
 
     private OrderService orderService;
 
     @BeforeEach
     void setUp() {
-        orderService = new OrderService(orderRepository, userRepository, productRepository, orderForUserMapper, cacheService, null);
+        orderService = new OrderService(orderRepository, userRepository, productRepository, cacheService, null);
     }
 
     @Test
