@@ -36,10 +36,9 @@
         <jacoco.version>0.8.12</jacoco.version>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.coverage.inclusions>src/main/java/com/example/silverpear/service/**/*.java</sonar.coverage.inclusions>
-        <!-- SonarCloud: ключи должны совпадать с проектом (Project information). При необходимости поправьте под свой аккаунт SonarCloud. -->
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-        <sonar.organization>com-example</sonar.organization>
-        <sonar.projectKey>com-example_silverpear</sonar.projectKey>
+        <sonar.organization>kristinkus</sonar.organization>
+        <sonar.projectKey>Kristinkus_SilverPear</sonar.projectKey>
     </properties>
     <dependencies>
 
