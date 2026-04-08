@@ -11,11 +11,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class LoggingAspect {
 
-
     private static final String LOG_NAME = "com.example.silverpear.service.performance";
     private final Logger logger = LoggerFactory.getLogger(LOG_NAME);
 
-    @Around("execution(* com.example.silverpear.service..*.*(..))")
+    @Around("execution(* com.example.silverpear.service..*.*(..)) || " +
+            "execution(* com.example.silverpear.errors..*.*(..))")
     public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
         try {

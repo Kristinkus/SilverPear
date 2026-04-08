@@ -8,7 +8,7 @@ import com.example.silverpear.product.entity.OrderItem;
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.product.entity.User;
 import com.example.silverpear.product.mapper.OrderForUserMapper;
-
+import com.example.silverpear.product.productdto.BulkOrderRequest;
 import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.repository.OrderRepository;
 import com.example.silverpear.repository.ProductRepository;
@@ -24,7 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -56,46 +58,10 @@ public class OrderService {
 
     @Transactional
     public Order createOrderWithTransaction(Long userId, OrderRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-
-        List<Product> products = new ArrayList<>();
-        for (Long productId : request.getProductIds()) {
-            Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new RuntimeException("Some products not found - transaction will rollback!"));
-            products.add(product);
-        }
-
-        Order order = new Order();
-        order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8));
-        order.setOrderDate(LocalDateTime.now());
-        order.setStatus(OrderStatus.NEW);
-        order.setUser(user);
-
-        double totalAmount = 0.0;
-
-        for (int i = 0; i < request.getProductIds().size(); i++) {
-            Product product = products.get(i);
-            Integer quantity = request.getQuantities().get(i);
-
-            OrderItem item = new OrderItem();
-            item.setQuantity(quantity);
-            item.setPriceAtTime(product.getSalePrice());
-            item.setProduct(product);
-            item.setOrder(order);
-
-            order.addOrderItem(item);
-            totalAmount += product.getSalePrice() * quantity;
-        }
-
-        order.setTotalAmount(totalAmount);
-        Order created = orderRepository.save(order);
-
-        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);
-        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);
-        log.info("Cache invalidated after order creation with transaction");
-
-        return created;
+        BulkOrderRequest bulkOrderRequest = new BulkOrderRequest();
+        bulkOrderRequest.setUserId(userId);
+        bulkOrderRequest.setOrders(List.of(request));
+        return createOrderBulkTransactional(bulkOrderRequest).getFirst();
     }
 
     public List<Order> findAllOrdersWithItemsAndProducts() {
@@ -277,5 +243,79 @@ public class OrderService {
         log.info("Filtered orders (native) saved to cache");
 
         return orders;
+    }
+
+
+    @Transactional
+    public List<Order> createOrderBulkTransactional(BulkOrderRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
+
+        List<Order> result = request.getOrders().stream()
+                .map(orderRequest -> buildOrder(user, orderRequest))
+                .map(orderRepository::save)
+                .toList();
+
+        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);
+        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);
+        log.info("Cache invalidated after bulk order creation");
+        return result;
+    }
+
+    public List<Order> createOrderBulkWithoutTransaction(BulkOrderRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
+
+        List<Order> result = new ArrayList<>();
+        for (OrderRequest orderRequest : request.getOrders()) {
+            Order order = buildOrder(user, orderRequest);
+            result.add(orderRepository.saveAndFlush(order));
+        }
+
+        cacheService.evictByPattern(CACHE_KEY_FIND_ALL);
+        cacheService.evictByPattern(CACHE_KEY_FIND_BY_STATUS);
+        log.info("Cache invalidated after bulk order creation");
+        return result;
+    }
+
+    @Deprecated
+    @Transactional
+    public List<Order> createOrderBulk(BulkOrderRequest request) {
+        return createOrderBulkTransactional(request);
+    }
+
+    private Order buildOrder(User user, OrderRequest request) {
+        List<Product> products = request.getProductIds().stream()
+                .map(this::findProductOrThrow)
+                .toList();
+
+        Order order = new Order();
+        order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8));
+        order.setOrderDate(LocalDateTime.now());
+        order.setStatus(OrderStatus.NEW);
+        order.setUser(user);
+
+        double totalAmount = IntStream.range(0, request.getProductIds().size())
+                .mapToDouble(i -> {
+                    Product product = products.get(i);
+                    Integer quantity = request.getQuantities().get(i);
+                    OrderItem item = new OrderItem();
+                    item.setQuantity(quantity);
+                    item.setPriceAtTime(product.getSalePrice());
+                    item.setProduct(product);
+                    item.setOrder(order);
+                    order.addOrderItem(item);
+                    return product.getSalePrice() * quantity;
+                })
+                .sum();
+
+        order.setTotalAmount(totalAmount);
+        return order;
+    }
+
+    private Product findProductOrThrow(Long productId) {
+        Optional<Product> optionalProduct = productRepository.findById(productId);
+        return optionalProduct.orElseThrow(
+                () -> new RuntimeException("Some products not found - transaction will rollback!"));
     }
 }

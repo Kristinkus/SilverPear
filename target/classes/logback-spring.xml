@@ -5,7 +5,7 @@
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <charset>UTF-8</charset>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} %highlight(%-5level) %white(%logger{40}) - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %highlight(%-5level) %(%logger{40}) - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -13,7 +13,7 @@
         <immediateFlush>true</immediateFlush>
         <encoder>
             <charset>UTF-8</charset>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %white(%logger{40}) - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %(%logger{40}) - %msg%n</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${LOG_PATH}/archive/silver_pear-%d{yyyy-MM-dd}.log</fileNamePattern>

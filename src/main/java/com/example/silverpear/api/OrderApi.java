@@ -1,10 +1,12 @@
 package com.example.silverpear.api;
 
 import com.example.silverpear.enums.OrderStatus;
+import com.example.silverpear.product.productdto.BulkOrderRequest;
 import com.example.silverpear.product.productdto.OrderForUserDto;
 import com.example.silverpear.product.productdto.OrderRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -78,4 +80,20 @@ public interface OrderApi {
     ResponseEntity<List<OrderForUserDto>> getOrdersByFiltersNative(
             @RequestParam String brand,
             @RequestParam(defaultValue = "0") Double minAmount);
+
+    @PostMapping("/bulk")
+    @Operation(summary = "Bulk создание заказов")
+    ResponseEntity<List<OrderForUserDto>> bulkCreateOrders(
+            @Valid @RequestBody BulkOrderRequest requests);
+
+    @PostMapping("/bulk/tx")
+    @Operation(summary = "Bulk создание заказов с транзакцией")
+    ResponseEntity<List<OrderForUserDto>> bulkCreateOrdersTransactional(
+            @Valid @RequestBody BulkOrderRequest request);
+
+    @PostMapping("/bulk/no-tx")
+    @Operation(summary = "Bulk создание заказов без транзакции")
+    ResponseEntity<List<OrderForUserDto>> bulkCreateOrdersWithoutTransaction(
+            @Valid @RequestBody BulkOrderRequest request);
+
 }

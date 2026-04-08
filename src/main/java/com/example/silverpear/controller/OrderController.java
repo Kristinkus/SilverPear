@@ -4,6 +4,7 @@ import com.example.silverpear.api.OrderApi;
 import com.example.silverpear.enums.OrderStatus;
 import com.example.silverpear.product.entity.Order;
 import com.example.silverpear.product.mapper.OrderForUserMapper;
+import com.example.silverpear.product.productdto.BulkOrderRequest;
 import com.example.silverpear.product.productdto.OrderForUserDto;
 import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.service.OrderService;
@@ -35,7 +36,11 @@ public class OrderController implements OrderApi {
 
     @Override
     public ResponseEntity<Object> createOrderWithTransaction(Long userId, OrderRequest request) {
-        Order order = orderService.createOrderWithTransaction(userId, request);
+        BulkOrderRequest bulkRequest = new BulkOrderRequest();
+        bulkRequest.setUserId(userId);
+        bulkRequest.setOrders(List.of(request));
+        List<Order> orders = orderService.createOrderBulkTransactional(bulkRequest);
+        Order order = orders.getFirst();
         OrderForUserDto dto = orderForUserMapper.toDto(order);
         return ResponseEntity.ok(dto);
     }
@@ -112,4 +117,32 @@ public class OrderController implements OrderApi {
                 .toList();
         return ResponseEntity.ok(dtos);
     }
+
+    @Override
+    public ResponseEntity<List<OrderForUserDto>> bulkCreateOrders(BulkOrderRequest request) {
+        List<Order> orders = orderService.createOrderBulkTransactional(request);
+        List<OrderForUserDto> dtos = orders.stream()
+                .map(orderForUserMapper::toDto)
+                .toList();
+        return ResponseEntity.status(HttpStatus.CREATED).body(dtos);
+    }
+
+    @Override
+    public ResponseEntity<List<OrderForUserDto>> bulkCreateOrdersTransactional(BulkOrderRequest request) {
+        List<Order> orders = orderService.createOrderBulkTransactional(request);
+        List<OrderForUserDto> dtos = orders.stream()
+                .map(orderForUserMapper::toDto)
+                .toList();
+        return ResponseEntity.status(HttpStatus.CREATED).body(dtos);
+    }
+
+    @Override
+    public ResponseEntity<List<OrderForUserDto>> bulkCreateOrdersWithoutTransaction(BulkOrderRequest request) {
+        List<Order> orders = orderService.createOrderBulkWithoutTransaction(request);
+        List<OrderForUserDto> dtos = orders.stream()
+                .map(orderForUserMapper::toDto)
+                .toList();
+        return ResponseEntity.status(HttpStatus.CREATED).body(dtos);
+    }
+
 }

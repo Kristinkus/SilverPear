@@ -11,5 +11,5 @@ public class UserWithOrdersDto {
     private String surname;
     private String email;
     private String phone;
-    private List<OrderForUserDto> orders; // список заказов без обратной ссылки
+    private List<OrderForUserDto> orders;
 }
