@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -72,6 +73,24 @@ class OrderServiceTest {
         assertSame(user, actual.getUser());
         assertEquals(50.0, actual.getTotalAmount(), 0.001);
         verify(orderRepository).save(any(Order.class));
+    }
+
+    @Test
+    void createOrderWithTransaction_usesInjectedSelfProxyWhenPresent() {
+        OrderService selfProxy = mock(OrderService.class);
+        OrderService service = new OrderService(orderRepository, userRepository, productRepository, cacheService, selfProxy);
+
+        Order expected = new Order();
+        when(selfProxy.createOrderBulkTransactional(any())).thenReturn(List.of(expected));
+
+        OrderRequest request = new OrderRequest();
+        request.setProductIds(List.of(1L));
+        request.setQuantities(List.of(1));
+
+        Order actual = service.createOrderWithTransaction(1L, request);
+
+        assertSame(expected, actual);
+        verify(selfProxy).createOrderBulkTransactional(any());
     }
 
     @Test
