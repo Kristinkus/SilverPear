@@ -24,9 +24,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-<span class="fc" id="L27">@Slf4j</span>
+<span class="nc" id="L27">@Slf4j</span>
 @RestControllerAdvice
-<span class="fc" id="L29">public class GlobalExceptionHandler {</span>
+<span class="nc" id="L29">public class GlobalExceptionHandler {</span>
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity&lt;ErrorResponse&gt; handleResponseStatusException(
@@ -84,13 +84,12 @@ import java.util.List;
     public ResponseEntity&lt;ErrorResponse&gt; handleHttpMessageNotReadableException(
             HttpMessageNotReadableException ex,
             HttpServletRequest request) {
-<span class="nc bnc" id="L87" title="All 2 branches missed.">        String detail = ex.getMostSpecificCause() != null</span>
-<span class="nc" id="L88">                ? ex.getMostSpecificCause().getMessage()</span>
-<span class="nc" id="L89">                : ex.getMessage();</span>
-<span class="nc" id="L90">        return ResponseEntity.badRequest().body(build(</span>
+<span class="nc" id="L87">        String causeMsg = ex.getMostSpecificCause().getMessage();</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">        String detail = causeMsg != null ? causeMsg : ex.getMessage();</span>
+<span class="nc" id="L89">        return ResponseEntity.badRequest().body(build(</span>
                 HttpStatus.BAD_REQUEST,
                 &quot;Некорректное тело запроса&quot;,
-<span class="nc bnc" id="L93" title="All 2 branches missed.">                List.of(detail != null ? detail : &quot;JSON или формат данных неверен&quot;),</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">                List.of(detail != null ? detail : &quot;JSON или формат данных неверен&quot;),</span>
                 request));
     }
 
@@ -98,11 +97,11 @@ import java.util.List;
     public ResponseEntity&lt;ErrorResponse&gt; handleMissingServletRequestParameterException(
             MissingServletRequestParameterException ex,
             HttpServletRequest request) {
-<span class="nc" id="L101">        String msg = &quot;Отсутствует обязательный параметр: &quot; + ex.getParameterName();</span>
-<span class="nc" id="L102">        return ResponseEntity.badRequest().body(build(</span>
+<span class="nc" id="L100">        String msg = &quot;Отсутствует обязательный параметр: &quot; + ex.getParameterName();</span>
+<span class="nc" id="L101">        return ResponseEntity.badRequest().body(build(</span>
                 HttpStatus.BAD_REQUEST,
                 &quot;Плохой запрос&quot;,
-<span class="nc" id="L105">                List.of(msg),</span>
+<span class="nc" id="L104">                List.of(msg),</span>
                 request));
     }
 
@@ -110,8 +109,9 @@ import java.util.List;
     public ResponseEntity&lt;ErrorResponse&gt; handleMethodArgumentTypeMismatchException(
             MethodArgumentTypeMismatchException ex,
             HttpServletRequest request) {
-<span class="nc bnc" id="L113" title="All 2 branches missed.">        String name = ex.getName() != null ? ex.getName() : &quot;параметр&quot;;</span>
-<span class="nc bnc" id="L114" title="All 2 branches missed.">        String required = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : &quot;?&quot;;</span>
+<span class="nc" id="L112">        String name = ex.getName();</span>
+<span class="nc" id="L113">        Class&lt;?&gt; requiredType = ex.getRequiredType();</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        String required = requiredType != null ? requiredType.getSimpleName() : &quot;?&quot;;</span>
 <span class="nc" id="L115">        String msg = &quot;Параметр «&quot; + name + &quot;» должен быть типа &quot; + required;</span>
 <span class="nc" id="L116">        return ResponseEntity.badRequest().body(build(</span>
                 HttpStatus.BAD_REQUEST,
