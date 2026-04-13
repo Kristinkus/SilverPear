@@ -2,7 +2,6 @@ package com.example.silverpear.controller;
 
 import com.example.silverpear.api.ConcurrencyApi;
 import com.example.silverpear.concurrency.dto.AsyncTaskStatusResponse;
-import com.example.silverpear.concurrency.dto.CounterSnapshotResponse;
 import com.example.silverpear.concurrency.dto.RaceConditionResultResponse;
 import com.example.silverpear.concurrency.dto.StartAsyncTaskResponse;
 import com.example.silverpear.service.ConcurrencyService;
@@ -31,26 +30,6 @@ public class ConcurrencyController implements ConcurrencyApi {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found");
         }
         return ResponseEntity.ok(status);
-    }
-
-    @Override
-    public ResponseEntity<CounterSnapshotResponse> incrementCounters(int times) {
-        if (times < 1) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "times must be >= 1");
-        }
-        CounterSnapshotResponse response = concurrencyService.incrementThreadSafeCounters(times);
-        return ResponseEntity.ok(response);
-    }
-
-    @Override
-    public ResponseEntity<CounterSnapshotResponse> getCounterSnapshot() {
-        return ResponseEntity.ok(concurrencyService.getCounterSnapshot());
-    }
-
-    @Override
-    public ResponseEntity<Void> resetCounters() {
-        concurrencyService.resetCounters();
-        return ResponseEntity.noContent().build();
     }
 
     @Override

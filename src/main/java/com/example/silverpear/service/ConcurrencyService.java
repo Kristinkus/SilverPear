@@ -2,7 +2,6 @@ package com.example.silverpear.service;
 
 import com.example.silverpear.concurrency.dto.AsyncTaskState;
 import com.example.silverpear.concurrency.dto.AsyncTaskStatusResponse;
-import com.example.silverpear.concurrency.dto.CounterSnapshotResponse;
 import com.example.silverpear.concurrency.dto.RaceConditionResultResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -56,7 +55,7 @@ public class ConcurrencyService {
         try {
             status.setState(AsyncTaskState.IN_PROGRESS);
             for (int progress = 10; progress <= 100; progress += 10) {
-                TimeUnit.SECONDS.sleep(2);
+                TimeUnit.SECONDS.sleep(1);
                 status.setProgressPercent(progress);
                 if (progress == 50) {
                     status.setState(AsyncTaskState.SAVED);
@@ -82,34 +81,12 @@ public class ConcurrencyService {
         return taskStatuses.get(taskId);
     }
 
-    public CounterSnapshotResponse incrementThreadSafeCounters(int times) {
-        for (int i = 0; i < times; i++) {
-            synchronized (this) {
-                synchronizedCounter++;
-            }
-            atomicCounter.incrementAndGet();
-        }
-        return getCounterSnapshot();
-    }
-
-    public CounterSnapshotResponse getCounterSnapshot() {
-        int synchronizedValue;
-        synchronized (this) {
-            synchronizedValue = synchronizedCounter;
-        }
-        return new CounterSnapshotResponse(synchronizedValue, atomicCounter.get());
-    }
-
-    public void resetCounters() {
+    public RaceConditionResultResponse runRaceCondition(int threads, int incrementsPerThread) {
         synchronized (this) {
             synchronizedCounter = 0;
             unsafeCounter = 0;
         }
         atomicCounter.set(0);
-    }
-
-    public RaceConditionResultResponse runRaceCondition(int threads, int incrementsPerThread) {
-        resetCounters();
 
         int expected = threads * incrementsPerThread;
         long startedAt = System.nanoTime();
