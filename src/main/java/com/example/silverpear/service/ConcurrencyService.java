@@ -56,9 +56,9 @@ public class ConcurrencyService {
         try {
             status.setState(AsyncTaskState.IN_PROGRESS);
             for (int progress = 10; progress <= 100; progress += 10) {
-                TimeUnit.SECONDS.sleep(3);
+                TimeUnit.SECONDS.sleep(2);
                 status.setProgressPercent(progress);
-                if (progress == 90) {
+                if (progress == 50) {
                     status.setState(AsyncTaskState.SAVED);
                 }
             }
