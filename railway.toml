@@ -1,0 +1,9 @@
+# Railway: собирать через Dockerfile (npm build фронта + Maven + JAR).
+# Иначе Railpack часто делает только mvn package — src/main/resources/static пустая (в .gitignore) → белый экран.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/actuator/health"
+healthcheckTimeout = 300
