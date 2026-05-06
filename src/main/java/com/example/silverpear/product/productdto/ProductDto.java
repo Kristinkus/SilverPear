@@ -25,8 +25,12 @@ public class ProductDto {
     private double salePrice;
     private double oldSalePrice;
     private boolean inStock;
+    private int stockQuantity;
 
     private String productType;
     private Gender gender;
     private double volume;
+
+    /** Путь к изображению витрины, например {@code /products/sku.png}. */
+    private String imageUrl;
 }

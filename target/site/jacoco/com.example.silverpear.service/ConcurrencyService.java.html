@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConcurrencyService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SilverPear</a> &gt; <a href="index.source.html" class="el_package">com.example.silverpear.service</a> &gt; <span class="el_source">ConcurrencyService.java</span></div><h1>ConcurrencyService.java</h1><pre class="source lang-java linenums">package com.example.silverpear.service;
+
+import com.example.silverpear.concurrency.dto.AsyncTaskState;
+import com.example.silverpear.concurrency.dto.AsyncTaskStatusResponse;
+import com.example.silverpear.concurrency.dto.RaceConditionResultResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
+<span class="fc" id="L20">@Slf4j</span>
+@Service
+public class ConcurrencyService {
+
+<span class="fc" id="L24">    private final ConcurrentHashMap&lt;Long, AsyncTaskStatusResponse&gt; taskStatuses = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc" id="L25">    private final AtomicLong taskIdGenerator = new AtomicLong(1);</span>
+<span class="fc" id="L26">    private final AtomicInteger atomicCounter = new AtomicInteger(0);</span>
+    private final ConcurrencyService self;
+<span class="fc" id="L28">    private int synchronizedCounter = 0;</span>
+<span class="fc" id="L29">    private int unsafeCounter = 0;</span>
+
+<span class="fc" id="L31">    public ConcurrencyService(@Lazy ConcurrencyService self) {</span>
+<span class="pc bpc" id="L32" title="1 of 2 branches missed.">        this.self = self != null ? self : this;</span>
+<span class="fc" id="L33">    }</span>
+
+    public Long startAsyncBusinessOperation() {
+<span class="nc" id="L36">        Long taskId = taskIdGenerator.getAndIncrement();</span>
+<span class="nc" id="L37">        AsyncTaskStatusResponse status = new AsyncTaskStatusResponse();</span>
+<span class="nc" id="L38">        status.setTaskId(taskId);</span>
+<span class="nc" id="L39">        status.setState(AsyncTaskState.ACCEPTED);</span>
+<span class="nc" id="L40">        status.setProgressPercent(0);</span>
+
+<span class="nc" id="L42">        taskStatuses.put(taskId, status);</span>
+
+<span class="nc" id="L44">        self.processTaskAsync(taskId);</span>
+<span class="nc" id="L45">        return taskId;</span>
+    }
+
+    @Async
+    public CompletableFuture&lt;Void&gt; processTaskAsync(Long taskId) {
+<span class="nc" id="L50">        AsyncTaskStatusResponse status = taskStatuses.get(taskId);</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        if (status == null) {</span>
+<span class="nc" id="L52">            return CompletableFuture.completedFuture(null);</span>
+        }
+
+        try {
+<span class="nc" id="L56">            status.setState(AsyncTaskState.IN_PROGRESS);</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">            for (int progress = 10; progress &lt;= 100; progress += 10) {</span>
+<span class="nc" id="L58">                TimeUnit.SECONDS.sleep(1);</span>
+<span class="nc" id="L59">                status.setProgressPercent(progress);</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">                if (progress == 50) {</span>
+<span class="nc" id="L61">                    status.setState(AsyncTaskState.SAVED);</span>
+                }
+            }
+<span class="nc" id="L64">            status.setResult(&quot;Задача выполнена успешно.&quot;);</span>
+<span class="nc" id="L65">            status.setState(AsyncTaskState.COMPLETED);</span>
+<span class="nc" id="L66">            log.info(&quot;Async task completed: {}&quot;, taskId);</span>
+<span class="nc" id="L67">        } catch (InterruptedException ex) {</span>
+<span class="nc" id="L68">            Thread.currentThread().interrupt();</span>
+<span class="nc" id="L69">            status.setState(AsyncTaskState.FAILED);</span>
+<span class="nc" id="L70">            status.setError(&quot;Task interrupted&quot;);</span>
+<span class="nc" id="L71">            log.warn(&quot;Async task interrupted: {}&quot;, taskId, ex);</span>
+<span class="nc" id="L72">        } catch (Exception ex) {</span>
+<span class="nc" id="L73">            status.setState(AsyncTaskState.FAILED);</span>
+<span class="nc" id="L74">            status.setError(ex.getMessage());</span>
+<span class="nc" id="L75">            log.error(&quot;Async task failed: {}&quot;, taskId, ex);</span>
+<span class="nc" id="L76">        }</span>
+<span class="nc" id="L77">        return CompletableFuture.completedFuture(null);</span>
+    }
+
+    public AsyncTaskStatusResponse getTaskStatus(Long taskId) {
+<span class="nc" id="L81">        return taskStatuses.get(taskId);</span>
+    }
+
+    public RaceConditionResultResponse runRaceCondition(int threads, int incrementsPerThread) {
+<span class="nc" id="L85">        synchronized (this) {</span>
+<span class="nc" id="L86">            synchronizedCounter = 0;</span>
+<span class="nc" id="L87">            unsafeCounter = 0;</span>
+<span class="nc" id="L88">        }</span>
+<span class="nc" id="L89">        atomicCounter.set(0);</span>
+
+<span class="nc" id="L91">        int expected = threads * incrementsPerThread;</span>
+<span class="nc" id="L92">        long startedAt = System.nanoTime();</span>
+<span class="nc" id="L93">        ExecutorService executor = Executors.newFixedThreadPool(threads);</span>
+<span class="nc" id="L94">        CountDownLatch startGate = new CountDownLatch(1);</span>
+<span class="nc" id="L95">        CountDownLatch finishGate = new CountDownLatch(threads);</span>
+
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        for (int t = 0; t &lt; threads; t++) {</span>
+<span class="nc" id="L98">            executor.submit(() -&gt; {</span>
+                try {
+<span class="nc" id="L100">                    startGate.await();</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">                    for (int i = 0; i &lt; incrementsPerThread; i++) {</span>
+<span class="nc" id="L102">                        unsafeCounter++;</span>
+<span class="nc" id="L103">                        synchronized (this) {</span>
+<span class="nc" id="L104">                            synchronizedCounter++;</span>
+<span class="nc" id="L105">                        }</span>
+<span class="nc" id="L106">                        atomicCounter.incrementAndGet();</span>
+                    }
+<span class="nc" id="L108">                } catch (InterruptedException ex) {</span>
+<span class="nc" id="L109">                    Thread.currentThread().interrupt();</span>
+                } finally {
+<span class="nc" id="L111">                    finishGate.countDown();</span>
+                }
+<span class="nc" id="L113">            });</span>
+        }
+
+<span class="nc" id="L116">        startGate.countDown();</span>
+        try {
+<span class="nc" id="L118">            finishGate.await(30, TimeUnit.SECONDS);</span>
+<span class="nc" id="L119">        } catch (InterruptedException ex) {</span>
+<span class="nc" id="L120">            Thread.currentThread().interrupt();</span>
+        } finally {
+<span class="nc" id="L122">            executor.shutdown();</span>
+        }
+
+<span class="nc" id="L125">        long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt);</span>
+<span class="nc" id="L126">        int unsafeActual = unsafeCounter;</span>
+        int synchronizedActual;
+<span class="nc" id="L128">        synchronized (this) {</span>
+<span class="nc" id="L129">            synchronizedActual = synchronizedCounter;</span>
+<span class="nc" id="L130">        }</span>
+<span class="nc" id="L131">        int atomicActual = atomicCounter.get();</span>
+
+<span class="nc" id="L133">        return new RaceConditionResultResponse(</span>
+                threads,
+                incrementsPerThread,
+                expected,
+                unsafeActual,
+                synchronizedActual,
+                atomicActual,
+                expected - unsafeActual,
+                expected - synchronizedActual,
+                expected - atomicActual,
+                durationMs
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

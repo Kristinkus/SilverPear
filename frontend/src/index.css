@@ -1,0 +1,20 @@
+html {
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: #2a1f38;
+  min-height: 100vh;
+  background-color: #ffffff;
+  overflow-x: hidden;
+}
+
+#root {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 20px 20px;
+  box-sizing: border-box;
+  min-width: 0;
+}

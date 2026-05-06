@@ -4,6 +4,7 @@ import com.example.silverpear.api.FavoriteApi;
 import com.example.silverpear.product.entity.Product;
 import com.example.silverpear.product.mapper.ProductMapper;
 import com.example.silverpear.product.productdto.ProductSimpleDto;
+import com.example.silverpear.security.AuthPrincipal;
 import com.example.silverpear.service.FavoriteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,26 +19,30 @@ public class FavoriteController implements FavoriteApi {
 
     private final FavoriteService favoriteService;
     private final ProductMapper productMapper;
+    private final AuthPrincipal authPrincipal;
 
     @Override
     public ResponseEntity&lt;Set&lt;ProductSimpleDto&gt;&gt; getFavorites(Long userId) {
-<span class="nc" id="L24">        Set&lt;Product&gt; favorites = favoriteService.getFavorites(userId);</span>
-<span class="nc" id="L25">        Set&lt;ProductSimpleDto&gt; dtos = favorites.stream()</span>
-<span class="nc" id="L26">                .map(productMapper::toSimpleDto)</span>
-<span class="nc" id="L27">                .collect(Collectors.toSet());</span>
-<span class="nc" id="L28">        return ResponseEntity.ok(dtos);</span>
+<span class="nc" id="L26">        authPrincipal.requireSelfOrAdmin(userId);</span>
+<span class="nc" id="L27">        Set&lt;Product&gt; favorites = favoriteService.getFavorites(userId);</span>
+<span class="nc" id="L28">        Set&lt;ProductSimpleDto&gt; dtos = favorites.stream()</span>
+<span class="nc" id="L29">                .map(productMapper::toSimpleDto)</span>
+<span class="nc" id="L30">                .collect(Collectors.toSet());</span>
+<span class="nc" id="L31">        return ResponseEntity.ok(dtos);</span>
     }
 
     @Override
     public ResponseEntity&lt;Void&gt; addFavorite(Long userId, Long productId) {
-<span class="nc" id="L33">        favoriteService.addFavorite(userId, productId);</span>
-<span class="nc" id="L34">        return ResponseEntity.ok().build();</span>
+<span class="nc" id="L36">        authPrincipal.requireSelfOrAdmin(userId);</span>
+<span class="nc" id="L37">        favoriteService.addFavorite(userId, productId);</span>
+<span class="nc" id="L38">        return ResponseEntity.ok().build();</span>
     }
 
     @Override
     public ResponseEntity&lt;Void&gt; removeFavorite(Long userId, Long productId) {
-<span class="nc" id="L39">        favoriteService.removeFavorite(userId, productId);</span>
-<span class="nc" id="L40">        return ResponseEntity.noContent().build();</span>
+<span class="nc" id="L43">        authPrincipal.requireSelfOrAdmin(userId);</span>
+<span class="nc" id="L44">        favoriteService.removeFavorite(userId, productId);</span>
+<span class="nc" id="L45">        return ResponseEntity.noContent().build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

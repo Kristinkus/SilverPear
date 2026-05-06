@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -24,6 +25,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @EntityGraph(attributePaths = {"orderItems", "orderItems.product"})
     @Query("SELECT o FROM Order o")
     List<Order> findAllOrdersWithItemsAndProducts();
+
+    @EntityGraph(attributePaths = {"user", "orderItems", "orderItems.product"})
+    @Query("SELECT o FROM Order o WHERE o.id = :id")
+    Optional<Order> findByIdWithUserAndItemsAndProducts(@Param("id") Long id);
+
+    boolean existsByIdAndUser_Id(Long id, Long userId);
 
 
     @Query("SELECT o FROM Order o LEFT JOIN FETCH OrderItem oi ON o.id = oi.id WHERE o.status = :status ")

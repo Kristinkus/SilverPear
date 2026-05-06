@@ -18,4 +18,10 @@ public class UserResponse {
 
     @Schema(description = "Фамилия")
     private String surname;
+
+    @Schema(description = "Отчество")
+    private String patronymic;
+
+    @Schema(description = "Роль")
+    private String role;
 }

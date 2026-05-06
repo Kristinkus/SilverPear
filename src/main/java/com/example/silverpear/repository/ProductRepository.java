@@ -21,6 +21,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     public List<Product> findByName(String name);
     public List<Product> findByCategory(String category);
     public  List<Product> findByBrand(String brand);
+    boolean existsByBrandIgnoreCase(String brand);
     long countByBrand(String brand);
     void deleteByBrand(String brand);
 

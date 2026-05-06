@@ -40,9 +40,11 @@ public class ProductMapper {
         dto.setCategory(product.getCategory());
         dto.setSalePrice(product.getSalePrice());
         dto.setInStock(product.isInStock());
+        dto.setStockQuantity(product.getStockQuantity());
         dto.setProductType(product.getType());
         dto.setGender(product.getGender());
         dto.setVolume(product.getVolume());
+        dto.setImageUrl(product.getImageUrl());
     }
 
     protected void fillBaseFieldsToEntity(Product product, ProductDto dto) {
@@ -53,9 +55,11 @@ public class ProductMapper {
         product.setCategory(dto.getCategory());
         product.setSalePrice(dto.getSalePrice());
         product.setInStock(dto.isInStock());
+        product.setStockQuantity(dto.getStockQuantity());
         product.setType(dto.getProductType());
         product.setGender(dto.getGender());
         product.setVolume(dto.getVolume());
+        product.setImageUrl(dto.getImageUrl());
     }
 
     public Product toEntity(ProductDto dto) {
@@ -89,6 +93,11 @@ public class ProductMapper {
         ProductSimpleDto dto = new ProductSimpleDto();
         dto.setId(product.getId());
         dto.setName(product.getName());
+        dto.setBrand(product.getBrand());
+        dto.setCategory(product.getCategory());
+        dto.setSalePrice(product.getSalePrice());
+        dto.setStockQuantity(product.getStockQuantity());
+        dto.setImageUrl(product.getImageUrl());
         return dto;
     }
 

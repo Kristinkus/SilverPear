@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.Set;
@@ -31,4 +32,20 @@ public interface FavoriteApi {
     ResponseEntity<Void> removeFavorite(
             @PathVariable Long userId,
             @PathVariable Long productId);
+
+    @GetMapping("/brands")
+    @Operation(summary = "Список избранных брендов")
+    ResponseEntity<Set<String>> getFavoriteBrands(@PathVariable Long userId);
+
+    @PostMapping("/brands")
+    @Operation(summary = "Добавить бренд в избранное")
+    ResponseEntity<Void> addFavoriteBrand(
+            @PathVariable Long userId,
+            @RequestParam String brand);
+
+    @DeleteMapping("/brands")
+    @Operation(summary = "Убрать бренд из избранного")
+    ResponseEntity<Void> removeFavoriteBrand(
+            @PathVariable Long userId,
+            @RequestParam String brand);
 }

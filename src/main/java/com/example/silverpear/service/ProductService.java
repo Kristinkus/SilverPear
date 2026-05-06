@@ -3,6 +3,7 @@ package com.example.silverpear.service;
 import com.example.silverpear.enums.Gender;
 import com.example.silverpear.cache.CacheKey;
 import com.example.silverpear.product.entity.Product;
+import com.example.silverpear.repository.FavoriteRepository;
 import com.example.silverpear.repository.ProductRepository;
 import com.example.silverpear.enums.ErrorMessages;
 
@@ -27,10 +28,12 @@ public class ProductService {
     private static final String CACHE_METHOD_FIND_BY_ID = "findById";
 
     protected final ProductRepository productRepository;
+    protected final FavoriteRepository favoriteRepository;
     protected final CacheService cacheService;
 
-    public ProductService(ProductRepository productRepository, CacheService cacheService) {
+    public ProductService(ProductRepository productRepository, FavoriteRepository favoriteRepository, CacheService cacheService) {
         this.productRepository = productRepository;
+        this.favoriteRepository = favoriteRepository;
         this.cacheService = cacheService;
     }
 
@@ -134,7 +137,10 @@ public class ProductService {
         return products;
     }
 
+    @Transactional
     public void deleteById(Long id) {
+        // Удаляем ссылку из избранного у всех пользователей до удаления товара.
+        favoriteRepository.deleteFavoriteLinksByProductId(id);
         productRepository.deleteById(id);
 
         CacheKey key = new CacheKey(CACHE_ENTITY_PRODUCT, CACHE_METHOD_FIND_BY_ID, "id=" + id, 0, 0, "", "");

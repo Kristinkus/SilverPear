@@ -31,13 +31,15 @@ public class UserRequest {
     @Size(max = 30, message = "Фамилия: не более 30 символов")
     private String surname;
 
-    @Schema(description = "Электронная почта", example = "ivan@mail.ru")
-    @NotBlank(message = "Email обязателен")
+    @Schema(description = "Отчество", example = "Иванович")
+    @Size(max = 30, message = "Отчество: не более 30 символов")
+    private String patronymic;
+
+    @Schema(description = "Электронная почта (необязательно при регистрации по телефону)", example = "ivan@mail.ru")
     @Email(message = "Некорректный формат email")
     private String email;
 
-    @Schema(description = "Телефон в заданном формате", example = "+7 999 123 45 67")
-    @Pattern(regexp = "^\\+\\d{1,3}\\s?\\d{3}\\s?\\d{3}\\s?\\d{2}\\s?\\d{2}$",
-            message = "Некорректный формат телефонного номера")
+    @Schema(description = "Телефон", example = "+375 29 123 45 67")
+    @Pattern(regexp = "^$|^\\+?[\\d\\s\\-]{10,22}$", message = "Некорректный формат телефонного номера")
     private String phone;
 }

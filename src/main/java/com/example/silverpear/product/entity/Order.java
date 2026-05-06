@@ -46,6 +46,12 @@ public class Order {
     @Column(name = "total_amount")
     private Double totalAmount;
 
+    /**
+     * Сумма, списанная с подарочного баланса при оформлении (не больше totalAmount).
+     */
+    @Column(name = "gift_card_applied_amount")
+    private Double giftCardAppliedAmount;
+
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private OrderStatus status;

@@ -31,7 +31,10 @@ import org.springframework.stereotype.Component;
 <span class="nc" id="L31">        response.setLogin(user.getLogin());</span>
 <span class="nc" id="L32">        response.setName(user.getName());</span>
 <span class="nc" id="L33">        response.setSurname(user.getSurname());</span>
-<span class="nc" id="L34">        return response;</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">        if (user.getRole() != null) {</span>
+<span class="nc" id="L35">            response.setRole(user.getRole().name());</span>
+        }
+<span class="nc" id="L37">        return response;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

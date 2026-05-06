@@ -7,6 +7,8 @@ import com.example.silverpear.product.mapper.OrderForUserMapper;
 import com.example.silverpear.product.productdto.BulkOrderRequest;
 import com.example.silverpear.product.productdto.OrderForUserDto;
 import com.example.silverpear.product.productdto.OrderRequest;
+import com.example.silverpear.security.AppUserDetails;
+import com.example.silverpear.security.AuthPrincipal;
 import com.example.silverpear.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,9 +26,18 @@ public class OrderController implements OrderApi {
 
     private final OrderService orderService;
     private final OrderForUserMapper orderForUserMapper;
+    private final AuthPrincipal authPrincipal;
+
+    private void requireOrderOwnerOrAdmin(Order order) {
+        AppUserDetails me = authPrincipal.currentUser();
+        if (!me.isAdmin() && !order.getUser().getId().equals(me.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Нет доступа к заказу");
+        }
+    }
 
     @Override
     public ResponseEntity<List<OrderForUserDto>> getAllOrders() {
+        authPrincipal.requireAdmin();
         List<Order> orders = orderService.findAllOrdersWithItemsAndProducts();
         List<OrderForUserDto> dtos = orders.stream()
                 .map(orderForUserMapper::toDto)
@@ -36,6 +47,7 @@ public class OrderController implements OrderApi {
 
     @Override
     public ResponseEntity<Object> createOrderWithTransaction(Long userId, OrderRequest request) {
+        authPrincipal.requireSelfOrAdmin(userId);
         BulkOrderRequest bulkRequest = new BulkOrderRequest();
         bulkRequest.setUserId(userId);
         bulkRequest.setOrders(List.of(request));
@@ -49,8 +61,11 @@ public class OrderController implements OrderApi {
     public ResponseEntity<OrderForUserDto> getOrderById(Long orderId) {
         try {
             Order order = orderService.findOrderById(orderId);
+            requireOrderOwnerOrAdmin(order);
             OrderForUserDto dto = orderForUserMapper.toDto(order);
             return ResponseEntity.ok(dto);
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (RuntimeException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
@@ -59,8 +74,12 @@ public class OrderController implements OrderApi {
     @Override
     public ResponseEntity<Void> deleteOrder(Long orderId) {
         try {
+            Order order = orderService.findOrderById(orderId);
+            requireOrderOwnerOrAdmin(order);
             orderService.deleteOrder(orderId);
             return ResponseEntity.noContent().build();
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (RuntimeException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
@@ -68,6 +87,7 @@ public class OrderController implements OrderApi {
 
     @Override
     public ResponseEntity<OrderForUserDto> updateOrder(Long orderId, OrderRequest request) {
+        authPrincipal.requireAdmin();
         try {
             Order updatedOrder = orderService.updateOrder(orderId, request);
             OrderForUserDto dto = orderForUserMapper.toDto(updatedOrder);
@@ -79,22 +99,25 @@ public class OrderController implements OrderApi {
 
     @Override
     public ResponseEntity<OrderForUserDto> updateOrderStatus(Long userId, Long orderId, OrderStatus status) {
-        Order order = orderService.findOrderById(orderId);
-        if (!order.getUser().getId().equals(userId)) {
+        authPrincipal.requireSelfOrAdmin(userId);
+        if (!orderService.orderBelongsToUser(orderId, userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Order does not belong to user");
         }
-        Order updatedOrder = orderService.updateOrderStatus(orderId, status);
-        return ResponseEntity.ok(orderForUserMapper.toDto(updatedOrder));
+        orderService.updateOrderStatus(orderId, status);
+        Order hydratedOrder = orderService.findOrderByIdWithUserAndItemsAndProducts(orderId);
+        return ResponseEntity.ok(orderForUserMapper.toDto(hydratedOrder));
     }
 
     @Override
     public ResponseEntity<List<OrderForUserDto>> getOrdersByStatus(OrderStatus status) {
+        authPrincipal.requireAdmin();
         List<Order> order = orderService.findByStatus(status);
         return ResponseEntity.ok(orderForUserMapper.toDtoList(order));
     }
 
     @Override
     public ResponseEntity<Page<OrderForUserDto>> getAllOrdersPageable(Pageable pageable) {
+        authPrincipal.requireAdmin();
         Page<Order> ordersPage = orderService.getOrdersPage(pageable);
         Page<OrderForUserDto> dtoPage = ordersPage.map(orderForUserMapper::toDto);
         return ResponseEntity.ok(dtoPage);
@@ -102,6 +125,7 @@ public class OrderController implements OrderApi {
 
     @Override
     public ResponseEntity<List<OrderForUserDto>> getOrdersByFilters(String brand, Double minAmount) {
+        authPrincipal.requireAdmin();
         List<Order> orders = orderService.getOrdersByFilters(brand, minAmount);
         List<OrderForUserDto> dtos = orders.stream()
                 .map(orderForUserMapper::toDto)
@@ -111,6 +135,7 @@ public class OrderController implements OrderApi {
 
     @Override
     public ResponseEntity<List<OrderForUserDto>> getOrdersByFiltersNative(String brand, Double minAmount) {
+        authPrincipal.requireAdmin();
         List<Order> orders = orderService.getOrdersByFiltersNative(brand, minAmount);
         List<OrderForUserDto> dtos = orders.stream()
                 .map(orderForUserMapper::toDto)
@@ -120,6 +145,7 @@ public class OrderController implements OrderApi {
 
     @Override
     public ResponseEntity<List<OrderForUserDto>> bulkCreateOrders(BulkOrderRequest request) {
+        authPrincipal.requireAdmin();
         List<Order> orders = orderService.createOrderBulkTransactional(request);
         List<OrderForUserDto> dtos = orders.stream()
                 .map(orderForUserMapper::toDto)
@@ -134,6 +160,7 @@ public class OrderController implements OrderApi {
 
     @Override
     public ResponseEntity<List<OrderForUserDto>> bulkCreateOrdersWithoutTransaction(BulkOrderRequest request) {
+        authPrincipal.requireAdmin();
         List<Order> orders = orderService.createOrderBulkWithoutTransaction(request);
         List<OrderForUserDto> dtos = orders.stream()
                 .map(orderForUserMapper::toDto)

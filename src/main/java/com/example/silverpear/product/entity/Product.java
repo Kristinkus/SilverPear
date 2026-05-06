@@ -39,19 +39,24 @@ public class Product {
     @Column(name = "brand", nullable = false)
     private String brand;
 
-    @Column(name = "description")
+    /** LONGTEXT вне лимита строки InnoDB (в отличие от VARCHAR(16000), см. ошибку «Row size too large»). */
+    @Column(name = "description", columnDefinition = "LONGTEXT")
     private String description;
 
     @Column(name = "category", nullable = false)
     private String category;
 
-    @Column(name = "salePrice", nullable = false)
+    @Column(name = "sale_price", nullable = false)
     private double salePrice;
 
-    @Column(name = "inStock", nullable = false)
+    @Column(name = "in_stock", nullable = false)
     private boolean inStock;
 
-    @Column(name = "Type")
+    /** Остаток на складе (штуки). Для витрины «успей купить»: остаток меньше 5. */
+    @Column(name = "stock_quantity", nullable = false, columnDefinition = "INTEGER NOT NULL DEFAULT 0")
+    private int stockQuantity;
+
+    @Column(name = "type")
     private String type;
 
     @Column(name = "gender")
@@ -61,6 +66,9 @@ public class Product {
     @Column(name = "volume")
     private double volume;
 
+    /** Путь к картинке для витрины, например {@code /products/sku-123.jpg} (статика из {@code classpath:/static}). */
+    @Column(name = "image_url", length = 512)
+    private String imageUrl;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

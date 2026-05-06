@@ -20,13 +20,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -36,6 +40,8 @@ public class OrderService {
     private static final String CACHE_KEY_FIND_ALL = CACHE_ENTITY_ORDER + ":findAll";
     private static final String CACHE_KEY_FIND_BY_STATUS = CACHE_ENTITY_ORDER + ":findByStatus";
     private static final String CACHE_METHOD_FIND_BY_ID = "findById";
+    private static final double FREE_DELIVERY_THRESHOLD = 55.0;
+    private static final double DELIVERY_FEE = 7.0;
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
@@ -64,24 +70,20 @@ public class OrderService {
     }
 
     public List<Order> findAllOrdersWithItemsAndProducts() {
-        CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, "findAllOrdersWithItemsAndProducts", "", 0, 0, "", "");
-
-        List<Order> cached = cacheService.get(key);
-        if (cached != null) {
-            log.info("Orders with items retrieved from cache");
-            return cached;
-        }
-
-        log.info("Orders with items not in cache");
-        List<Order> orders = orderRepository.findAllOrdersWithItemsAndProducts();
-        cacheService.put(key, orders);
-        log.info("Orders with items saved to cache");
-
-        return orders;
+        // Do not cache entity graphs with lazy associations:
+        // detached proxies from cache can fail with "no session" during DTO mapping.
+        return orderRepository.findAllOrdersWithItemsAndProducts();
     }
 
+    @Transactional
     public void deleteOrder(Long orderId) {
-        orderRepository.deleteById(orderId);
+        Optional<Order> opt = orderRepository.findById(orderId);
+        if (opt.isEmpty()) {
+            return;
+        }
+        Order order = opt.get();
+        refundGiftBalanceIfApplied(order);
+        orderRepository.delete(order);
 
         CacheKey key = new CacheKey(CACHE_ENTITY_ORDER, CACHE_METHOD_FIND_BY_ID, "id=" + orderId, 0, 0, "", "");
         cacheService.evict(key);
@@ -109,22 +111,29 @@ public class OrderService {
         return order;
     }
 
+    @Transactional(readOnly = true)
+    public Order findOrderByIdWithUserAndItemsAndProducts(Long orderId) {
+        return orderRepository.findByIdWithUserAndItemsAndProducts(orderId)
+                .orElseThrow(() -> new RuntimeException(ErrorMessages.ORDER_NOT_FOUND.withId(orderId)));
+    }
+
+    @Transactional(readOnly = true)
+    public boolean orderBelongsToUser(Long orderId, Long userId) {
+        return orderRepository.existsByIdAndUser_Id(orderId, userId);
+    }
+
     @Transactional
     public Order updateOrder(Long orderId, OrderRequest request) {
         Order existingOrder = findOrderById(orderId);
+        refundGiftBalanceIfApplied(existingOrder);
         existingOrder.getOrderItems().clear();
 
-        List<Product> products = new ArrayList<>();
-        for (Long productId : request.getProductIds()) {
+        double itemsTotal = 0.0;
+        for (Map.Entry<String, Integer> entry : request.getProductQuantities().entrySet()) {
+            long productId = parseProductIdKey(entry.getKey());
             Product product = productRepository.findById(productId)
                     .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
-            products.add(product);
-        }
-
-        double totalAmount = 0.0;
-        for (int i = 0; i < request.getProductIds().size(); i++) {
-            Product product = products.get(i);
-            Integer quantity = request.getQuantities().get(i);
+            Integer quantity = entry.getValue();
 
             OrderItem item = new OrderItem();
             item.setQuantity(quantity);
@@ -133,9 +142,11 @@ public class OrderService {
             item.setOrder(existingOrder);
 
             existingOrder.addOrderItem(item);
-            totalAmount += product.getSalePrice() * quantity;
+            itemsTotal += product.getSalePrice() * quantity;
         }
+        double totalAmount = applyDeliveryFee(itemsTotal);
         existingOrder.setTotalAmount(totalAmount);
+        existingOrder.setGiftCardAppliedAmount(null);
 
         Order updated = orderRepository.save(existingOrder);
 
@@ -150,7 +161,8 @@ public class OrderService {
 
     @Transactional
     public Order updateOrderStatus(Long orderId, OrderStatus status) {
-        Order order = findOrderById(orderId);
+        Order order = orderRepository.findByIdWithUserAndItemsAndProducts(orderId)
+                .orElseThrow(() -> new RuntimeException(ErrorMessages.ORDER_NOT_FOUND.withId(orderId)));
         order.setStatus(status);
 
         Order updated = orderRepository.save(order);
@@ -278,20 +290,17 @@ public class OrderService {
     }
 
     private Order buildOrder(User user, OrderRequest request) {
-        List<Product> products = request.getProductIds().stream()
-                .map(this::findProductOrThrow)
-                .toList();
-
         Order order = new Order();
         order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8));
         order.setOrderDate(LocalDateTime.now());
         order.setStatus(OrderStatus.NEW);
         order.setUser(user);
 
-        double totalAmount = IntStream.range(0, request.getProductIds().size())
-                .mapToDouble(i -> {
-                    Product product = products.get(i);
-                    Integer quantity = request.getQuantities().get(i);
+        double itemsTotal = request.getProductQuantities().entrySet().stream()
+                .mapToDouble(entry -> {
+                    long productId = parseProductIdKey(entry.getKey());
+                    Product product = findProductOrThrow(productId);
+                    Integer quantity = entry.getValue();
                     OrderItem item = new OrderItem();
                     item.setQuantity(quantity);
                     item.setPriceAtTime(product.getSalePrice());
@@ -299,16 +308,66 @@ public class OrderService {
                     item.setOrder(order);
                     order.addOrderItem(item);
                     return product.getSalePrice() * quantity;
-                })
-                .sum();
+                }).sum();
+        double totalAmount = applyDeliveryFee(itemsTotal);
 
         order.setTotalAmount(totalAmount);
+
+        Double giftReq = request.getGiftCardAmount();
+        if (giftReq != null && giftReq > 1e-9) {
+            BigDecimal balance = user.getGiftBalance() != null ? user.getGiftBalance() : BigDecimal.ZERO;
+            BigDecimal grossBd = BigDecimal.valueOf(totalAmount).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal reqBd = BigDecimal.valueOf(giftReq).setScale(2, RoundingMode.HALF_UP);
+            if (reqBd.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Сумма списания с подарочного баланса должна быть больше нуля");
+            }
+            BigDecimal maxApply = grossBd.min(balance);
+            if (maxApply.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Недостаточно средств на подарочном балансе");
+            }
+            BigDecimal applyBd = reqBd.min(maxApply);
+            user.setGiftBalance(balance.subtract(applyBd).setScale(2, RoundingMode.HALF_UP));
+            userRepository.save(user);
+            order.setGiftCardAppliedAmount(applyBd.doubleValue());
+        } else {
+            order.setGiftCardAppliedAmount(null);
+        }
+
         return order;
+    }
+
+    private void refundGiftBalanceIfApplied(Order order) {
+        Double applied = order.getGiftCardAppliedAmount();
+        if (applied == null || applied <= 1e-9) {
+            return;
+        }
+        User user = order.getUser();
+        BigDecimal balance = user.getGiftBalance() != null ? user.getGiftBalance() : BigDecimal.ZERO;
+        user.setGiftBalance(balance.add(BigDecimal.valueOf(applied)).setScale(2, RoundingMode.HALF_UP));
+        userRepository.save(user);
+        order.setGiftCardAppliedAmount(null);
     }
 
     private Product findProductOrThrow(Long productId) {
         Optional<Product> optionalProduct = productRepository.findById(productId);
         return optionalProduct.orElseThrow(
                 () -> new RuntimeException("Some products not found - transaction will rollback!"));
+    }
+
+    private static long parseProductIdKey(String key) {
+        try {
+            return Long.parseLong(key.trim());
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("Некорректный ID товара: " + key);
+        }
+    }
+
+    private static double applyDeliveryFee(double itemsTotal) {
+        if (itemsTotal <= 0 || itemsTotal >= FREE_DELIVERY_THRESHOLD) {
+            return itemsTotal;
+        }
+        return itemsTotal + DELIVERY_FEE;
     }
 }

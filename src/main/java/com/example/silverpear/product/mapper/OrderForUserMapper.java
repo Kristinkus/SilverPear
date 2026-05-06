@@ -21,9 +21,11 @@ public class OrderForUserMapper {
         }
         OrderForUserDto dto = new OrderForUserDto();
         dto.setId(order.getId());
+        dto.setUserId(order.getUser() != null ? order.getUser().getId() : null);
         dto.setOrderNumber(order.getOrderNumber());
         dto.setOrderDate(order.getOrderDate());
         dto.setTotalAmount(order.getTotalAmount());
+        dto.setGiftCardAppliedAmount(order.getGiftCardAppliedAmount());
         dto.setStatus(order.getStatus().name());
         dto.setOrderItems(order.getOrderItems().stream()
                 .map(orderItemMapper::toDto)

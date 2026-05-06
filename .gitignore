@@ -33,3 +33,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Vite build → Spring static (см. frontend/README.md) ###
+src/main/resources/static/

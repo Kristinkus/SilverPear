@@ -1,9 +1,10 @@
 package com.example.silverpear.api;
 
 import com.example.silverpear.errors.ErrorResponse;
-import com.example.silverpear.product.entity.User;
+import com.example.silverpear.product.productdto.AdminUserListDto;
 import com.example.silverpear.product.productdto.OrderForUserDto;
 import com.example.silverpear.product.productdto.OrderRequest;
+import com.example.silverpear.product.productdto.UserProfilePatchRequest;
 import com.example.silverpear.product.productdto.UserRequest;
 import com.example.silverpear.product.productdto.UserResponse;
 import com.example.silverpear.product.productdto.UserWithOrdersDto;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,7 +33,7 @@ public interface UserApi {
 
     @GetMapping
     @Operation(summary = "Список всех пользователей")
-    ResponseEntity<List<User>> getAllUsers();
+    ResponseEntity<List<AdminUserListDto>> getAllUsers();
 
     @GetMapping("/{id}")
     @Operation(summary = "Пользователь по id")
@@ -62,6 +64,15 @@ public interface UserApi {
     ResponseEntity<UserResponse> updateUser(
             @Parameter(description = "Id пользователя") @PathVariable Long id,
             @Valid @RequestBody UserRequest request);
+
+    @PatchMapping("/{id}/profile")
+    @Operation(summary = "Изменить фамилию, имя и отчество (без смены пароля)")
+    @ApiResponse(responseCode = "200", description = "Обновлено")
+    @ApiResponse(responseCode = "400", description = "Ошибка валидации",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    ResponseEntity<UserResponse> patchProfile(
+            @Parameter(description = "Id пользователя") @PathVariable Long id,
+            @Valid @RequestBody UserProfilePatchRequest request);
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить пользователя")

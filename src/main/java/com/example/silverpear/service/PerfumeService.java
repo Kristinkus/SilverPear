@@ -3,6 +3,7 @@ package com.example.silverpear.service;
 
 import com.example.silverpear.product.entity.Perfume;
 import com.example.silverpear.enums.ErrorMessages;
+import com.example.silverpear.repository.FavoriteRepository;
 import com.example.silverpear.repository.PerfumeRepository;
 import com.example.silverpear.repository.ProductRepository;
 
@@ -18,8 +19,9 @@ public class PerfumeService extends ProductService {
     
     public PerfumeService(ProductRepository productRepository,
                           PerfumeRepository perfumeRepository,
+                          FavoriteRepository favoriteRepository,
                           CacheService cacheService) {
-        super(productRepository, cacheService);
+        super(productRepository, favoriteRepository, cacheService);
         this.perfumeRepository = perfumeRepository;
 
     }

@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -66,8 +67,8 @@ class OrderServiceBulkTest {
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         List<Order> created = orderService.createOrderBulkTransactional(bulkRequest(1L, List.of(
-                orderRequest(List.of(10L, 20L), List.of(1, 2)),
-                orderRequest(List.of(20L), List.of(1))
+                orderRequest(Map.of("10", 1, "20", 2)),
+                orderRequest(Map.of("20", 1))
         )));
 
         assertEquals(2, created.size());
@@ -87,7 +88,7 @@ class OrderServiceBulkTest {
         when(orderRepository.saveAndFlush(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         List<Order> created = orderService.createOrderBulkWithoutTransaction(bulkRequest(1L, List.of(
-                orderRequest(List.of(10L), List.of(3))
+                orderRequest(Map.of("10", 3))
         )));
 
         assertEquals(1, created.size());
@@ -113,8 +114,8 @@ class OrderServiceBulkTest {
                 .thenThrow(new RuntimeException("DB failure on second save"));
 
         BulkOrderRequest bulk = bulkRequest(1L, List.of(
-                orderRequest(List.of(10L), List.of(1)),
-                orderRequest(List.of(20L), List.of(2))
+                orderRequest(Map.of("10", 1)),
+                orderRequest(Map.of("20", 2))
         ));
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
@@ -135,7 +136,7 @@ class OrderServiceBulkTest {
         when(productRepository.findById(999L)).thenReturn(Optional.empty());
 
         BulkOrderRequest bulk = bulkRequest(1L, List.of(
-                orderRequest(List.of(999L), List.of(1))
+                orderRequest(Map.of("999", 1))
         ));
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
@@ -158,7 +159,7 @@ class OrderServiceBulkTest {
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         List<Order> created = orderService.createOrderBulkTransactional(bulkRequest(1L, List.of(
-                orderRequest(List.of(10L), List.of(2))
+                orderRequest(Map.of("10", 2))
         )));
 
         assertEquals(1, created.size());
@@ -176,10 +177,9 @@ class OrderServiceBulkTest {
         return product;
     }
 
-    private static OrderRequest orderRequest(List<Long> productIds, List<Integer> quantities) {
+    private static OrderRequest orderRequest(Map<String, Integer> productQuantities) {
         OrderRequest request = new OrderRequest();
-        request.setProductIds(productIds);
-        request.setQuantities(quantities);
+        request.setProductQuantities(productQuantities);
         return request;
     }
 

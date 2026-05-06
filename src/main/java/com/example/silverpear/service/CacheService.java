@@ -38,4 +38,9 @@ public class CacheService {
         cache.keySet().removeIf(key -> key.toString().contains(pattern));
         log.info("Cache evicted by pattern '{}': entries removed", pattern);
     }
+
+    public void clearAll() {
+        cache.clear();
+        log.info("Cache fully cleared");
+    }
 }

@@ -9,6 +9,7 @@ import com.example.silverpear.product.productdto.OrderRequest;
 import com.example.silverpear.product.productdto.UserRequest;
 import com.example.silverpear.product.productdto.UserResponse;
 import com.example.silverpear.product.productdto.UserWithOrdersDto;
+import com.example.silverpear.security.AuthPrincipal;
 import com.example.silverpear.service.OrderService;
 import com.example.silverpear.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -25,45 +26,50 @@ public class UserController implements UserApi {
     private final UserService userService;
     private final OrderService orderService;
     private final OrderForUserMapper orderForUserMapper;
+    private final AuthPrincipal authPrincipal;
 
     @Override
     public ResponseEntity&lt;List&lt;User&gt;&gt; getAllUsers() {
-<span class="nc" id="L31">        return ResponseEntity.ok(userService.getAllUsers());</span>
+<span class="nc" id="L33">        return ResponseEntity.ok(userService.getAllUsers());</span>
     }
 
     @Override
     public ResponseEntity&lt;UserResponse&gt; getUserById(Long id) {
-<span class="nc" id="L36">        return ResponseEntity.ok(userService.getUserById(id));</span>
+<span class="nc" id="L38">        authPrincipal.requireSelfOrAdmin(id);</span>
+<span class="nc" id="L39">        return ResponseEntity.ok(userService.getUserById(id));</span>
     }
 
     @Override
     public ResponseEntity&lt;UserWithOrdersDto&gt; getUserWithOrders(Long id) {
-<span class="nc" id="L41">        return ResponseEntity.ok(userService.getUserWithOrders(id));</span>
+<span class="nc" id="L44">        authPrincipal.requireSelfOrAdmin(id);</span>
+<span class="nc" id="L45">        return ResponseEntity.ok(userService.getUserWithOrders(id));</span>
     }
 
     @Override
     public ResponseEntity&lt;UserResponse&gt; createUser(UserRequest request) {
-<span class="nc" id="L46">        UserResponse created = userService.createUser(request);</span>
-<span class="nc" id="L47">        return ResponseEntity.status(HttpStatus.CREATED).body(created);</span>
+<span class="nc" id="L50">        UserResponse created = userService.createUser(request);</span>
+<span class="nc" id="L51">        return ResponseEntity.status(HttpStatus.CREATED).body(created);</span>
     }
 
     @Override
     public ResponseEntity&lt;UserResponse&gt; updateUser(Long id, UserRequest request) {
-<span class="nc" id="L52">        UserResponse updated = userService.updateUser(id, request);</span>
-<span class="nc" id="L53">        return ResponseEntity.ok(updated);</span>
+<span class="nc" id="L56">        authPrincipal.requireSelfOrAdmin(id);</span>
+<span class="nc" id="L57">        UserResponse updated = userService.updateUser(id, request);</span>
+<span class="nc" id="L58">        return ResponseEntity.ok(updated);</span>
     }
 
     @Override
     public ResponseEntity&lt;Void&gt; deleteUser(Long id) {
-<span class="nc" id="L58">        userService.deleteUser(id);</span>
-<span class="nc" id="L59">        return ResponseEntity.noContent().build();</span>
+<span class="nc" id="L63">        userService.deleteUser(id);</span>
+<span class="nc" id="L64">        return ResponseEntity.noContent().build();</span>
     }
 
     @Override
     public ResponseEntity&lt;OrderForUserDto&gt; createOrderForUser(Long userId, OrderRequest request) {
-<span class="nc" id="L64">        Order order = orderService.createOrderWithTransaction(userId, request);</span>
-<span class="nc" id="L65">        return ResponseEntity.status(HttpStatus.CREATED)</span>
-<span class="nc" id="L66">                .body(orderForUserMapper.toDto(order));</span>
+<span class="nc" id="L69">        authPrincipal.requireSelfOrAdmin(userId);</span>
+<span class="nc" id="L70">        Order order = orderService.createOrderWithTransaction(userId, request);</span>
+<span class="nc" id="L71">        return ResponseEntity.status(HttpStatus.CREATED)</span>
+<span class="nc" id="L72">                .body(orderForUserMapper.toDto(order));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

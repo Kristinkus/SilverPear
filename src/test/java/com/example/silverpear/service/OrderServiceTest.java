@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -65,8 +66,7 @@ class OrderServiceTest {
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         OrderRequest request = new OrderRequest();
-        request.setProductIds(List.of(1L));
-        request.setQuantities(List.of(2));
+        request.setProductQuantities(Map.of("1", 2));
 
         Order actual = orderService.createOrderWithTransaction(10L, request);
 
@@ -84,8 +84,7 @@ class OrderServiceTest {
         when(selfProxy.createOrderBulkTransactional(any())).thenReturn(List.of(expected));
 
         OrderRequest request = new OrderRequest();
-        request.setProductIds(List.of(1L));
-        request.setQuantities(List.of(1));
+        request.setProductQuantities(Map.of("1", 1));
 
         Order actual = service.createOrderWithTransaction(1L, request);
 
@@ -108,11 +107,20 @@ class OrderServiceTest {
 
     @Test
     void deleteOrder_success() {
+        Order order = new Order();
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         orderService.deleteOrder(1L);
-        verify(orderRepository).deleteById(1L);
+        verify(orderRepository).delete(order);
         verify(cacheService).evict(any());
         verify(cacheService).evictByPattern("Order:findAll");
         verify(cacheService).evictByPattern("Order:findByStatus");
+    }
+
+    @Test
+    void deleteOrder_whenMissing_noDelete() {
+        when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+        orderService.deleteOrder(99L);
+        verify(orderRepository, never()).delete(any());
     }
 
     @Test
@@ -143,8 +151,7 @@ class OrderServiceTest {
         when(orderRepository.save(existing)).thenReturn(existing);
 
         OrderRequest request = new OrderRequest();
-        request.setProductIds(List.of(5L));
-        request.setQuantities(List.of(2));
+        request.setProductQuantities(Map.of("5", 2));
         Order updated = orderService.updateOrder(11L, request);
         assertEquals(20.0, updated.getTotalAmount());
         verify(cacheService).put(any(), eq(updated));
@@ -157,8 +164,7 @@ class OrderServiceTest {
         Order existing2 = new Order();
         when(cacheService.get(any())).thenReturn(existing2);
         OrderRequest request2 = new OrderRequest();
-        request2.setProductIds(List.of(404L));
-        request2.setQuantities(List.of(1));
+        request2.setProductQuantities(Map.of("404", 1));
         when(productRepository.findById(404L)).thenReturn(Optional.empty());
         long orderId2 = 12L;
         assertThrows(RuntimeException.class, () -> orderService.updateOrder(orderId2, request2));
@@ -231,8 +237,7 @@ class OrderServiceTest {
         when(productRepository.findById(999L)).thenReturn(Optional.empty());
 
         OrderRequest request = new OrderRequest();
-        request.setProductIds(List.of(999L));
-        request.setQuantities(List.of(1));
+        request.setProductQuantities(Map.of("999", 1));
 
         var bulk = bulkRequest(1L, List.of(request));
         RuntimeException ex = assertThrows(RuntimeException.class,

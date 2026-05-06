@@ -27,6 +27,7 @@ public class LoadTestService {
         product.setType(LOAD_TEST_TYPE);
         product.setSalePrice(ThreadLocalRandom.current().nextDouble(10.0, 1000.0));
         product.setInStock(true);
+        product.setStockQuantity(100);
         product.setVolume(ThreadLocalRandom.current().nextDouble(10.0, 200.0));
         return productService.create(product);
     }

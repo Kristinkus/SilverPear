@@ -1,5 +1,6 @@
 package com.example.silverpear.service;
 
+import com.example.silverpear.enums.UserRole;
 import com.example.silverpear.product.entity.User;
 import com.example.silverpear.product.mapper.UserMapper;
 import com.example.silverpear.product.mapper.UserWithOrdersMapper;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -20,6 +22,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,12 +36,18 @@ class UserServiceTest {
     private UserMapper userMapper;
     @Mock
     private UserWithOrdersMapper userWithOrdersMapper;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, userMapper, userWithOrdersMapper);
+        userService = new UserService(userRepository, userMapper, userWithOrdersMapper, passwordEncoder);
+        lenient().when(passwordEncoder.encode(any())).thenAnswer(invocation -> {
+            Object raw = invocation.getArgument(0);
+            return "enc_" + raw;
+        });
     }
 
     @Test
@@ -79,13 +89,17 @@ class UserServiceTest {
     void createUser_success() {
         UserRequest request = new UserRequest();
         request.setLogin("l");
-        request.setEmail("e");
+        request.setPassword("password12");
+        request.setName("n");
+        request.setSurname("s");
+        request.setEmail("e@e.ru");
+        request.setPhone("+7 999 123 45 67");
         User user = new User();
         User saved = new User();
         UserResponse response = new UserResponse();
 
         when(userRepository.existsByLogin("l")).thenReturn(false);
-        when(userRepository.existsByEmail("e")).thenReturn(false);
+        when(userRepository.existsByEmail("e@e.ru")).thenReturn(false);
         when(userMapper.toEntity(request)).thenReturn(user);
         when(userRepository.save(user)).thenReturn(saved);
         when(userMapper.toResponse(saved)).thenReturn(response);
@@ -117,12 +131,19 @@ class UserServiceTest {
     void updateUser_success() {
         UserRequest request = new UserRequest();
         request.setLogin("l");
+        request.setPassword("password12");
+        request.setName("n");
+        request.setSurname("s");
         request.setEmail("e");
+        request.setPhone("+7 999 123 45 67");
+        User existing = new User();
+        existing.setId(1L);
+        existing.setRole(UserRole.USER);
         User entity = new User();
         User saved = new User();
         UserResponse response = new UserResponse();
 
-        when(userRepository.existsById(1L)).thenReturn(true);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
         when(userRepository.existsByLoginAndIdNot("l", 1L)).thenReturn(false);
         when(userRepository.existsByEmailAndIdNot("e", 1L)).thenReturn(false);
         when(userMapper.toEntity(request)).thenReturn(entity);
@@ -135,7 +156,7 @@ class UserServiceTest {
 
     @Test
     void updateUser_notFound() {
-        when(userRepository.existsById(1L)).thenReturn(false);
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
         UserRequest missing = new UserRequest();
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -147,7 +168,15 @@ class UserServiceTest {
     void updateUser_loginConflict() {
         UserRequest request = new UserRequest();
         request.setLogin("l");
-        when(userRepository.existsById(1L)).thenReturn(true);
+        request.setPassword("password12");
+        request.setName("n");
+        request.setSurname("s");
+        request.setEmail("e@e.ru");
+        request.setPhone("+7 999 123 45 67");
+        User existing = new User();
+        existing.setId(1L);
+        existing.setRole(UserRole.USER);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
         when(userRepository.existsByLoginAndIdNot("l", 1L)).thenReturn(true);
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.updateUser(1L, request));
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
@@ -157,8 +186,15 @@ class UserServiceTest {
     void updateUser_emailConflict() {
         UserRequest request = new UserRequest();
         request.setLogin("l");
+        request.setPassword("password12");
+        request.setName("n");
+        request.setSurname("s");
         request.setEmail("e");
-        when(userRepository.existsById(1L)).thenReturn(true);
+        request.setPhone("+7 999 123 45 67");
+        User existing = new User();
+        existing.setId(1L);
+        existing.setRole(UserRole.USER);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
         when(userRepository.existsByLoginAndIdNot("l", 1L)).thenReturn(false);
         when(userRepository.existsByEmailAndIdNot("e", 1L)).thenReturn(true);
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.updateUser(1L, request));
