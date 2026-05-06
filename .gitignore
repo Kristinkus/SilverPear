@@ -1,4 +1,5 @@
 HELP.md
+.env
 
 ### Logs (runtime, не коммитить) ###
 logs/

@@ -3,6 +3,7 @@ package com.example.silverpear.service;
 import com.example.silverpear.enums.SkinType;
 import com.example.silverpear.product.entity.Cosmetics;
 import com.example.silverpear.repository.CosmeticsRepository;
+import com.example.silverpear.repository.FavoriteRepository;
 import com.example.silverpear.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,13 +28,16 @@ class CosmeticsServiceTest {
     @Mock
     private CosmeticsRepository cosmeticsRepository;
     @Mock
+    private FavoriteRepository favoriteRepository;
+    @Mock
     private CacheService cacheService;
 
     private CosmeticsService cosmeticsService;
 
     @BeforeEach
     void setUp() {
-        cosmeticsService = new CosmeticsService(productRepository, cosmeticsRepository, cacheService);
+        cosmeticsService = new CosmeticsService(
+                productRepository, cosmeticsRepository, favoriteRepository, cacheService);
     }
 
     @Test
