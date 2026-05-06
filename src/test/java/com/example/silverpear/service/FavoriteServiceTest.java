@@ -10,15 +10,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -56,7 +61,7 @@ class FavoriteServiceTest {
     @Test
     void addFavorite_userNotFound() {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> favoriteService.addFavorite(1L, 2L));
+        assertThrows(ResponseStatusException.class, () -> favoriteService.addFavorite(1L, 2L));
     }
 
     @Test
@@ -65,42 +70,44 @@ class FavoriteServiceTest {
         user.setFavorites(new HashSet<>());
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(productRepository.findById(2L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> favoriteService.addFavorite(1L, 2L));
+        assertThrows(ResponseStatusException.class, () -> favoriteService.addFavorite(1L, 2L));
     }
 
     @Test
     void removeFavorite_success() {
-        Product product = new Product();
-        User user = new User();
-        user.setFavorites(new HashSet<>(Set.of(product)));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(productRepository.findById(2L)).thenReturn(Optional.of(product));
-
+        when(userRepository.existsById(1L)).thenReturn(true);
         favoriteService.removeFavorite(1L, 2L);
-
-        assertFalse(user.getFavorites().contains(product));
-        verify(userRepository).save(user);
+        verify(favoriteRepository).deleteFavoriteLink(1L, 2L);
     }
 
     @Test
     void removeFavorite_userNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> favoriteService.removeFavorite(1L, 2L));
+        when(userRepository.existsById(1L)).thenReturn(false);
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class, () -> favoriteService.removeFavorite(1L, 2L));
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verify(favoriteRepository, never()).deleteFavoriteLink(anyLong(), anyLong());
     }
 
     @Test
-    void removeFavorite_productNotFound() {
-        User user = new User();
-        user.setFavorites(new HashSet<>());
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(productRepository.findById(2L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> favoriteService.removeFavorite(1L, 2L));
+    void removeFavorite_deletesLinkWhenUserExists() {
+        when(userRepository.existsById(1L)).thenReturn(true);
+        favoriteService.removeFavorite(1L, 99L);
+        verify(favoriteRepository).deleteFavoriteLink(1L, 99L);
     }
 
     @Test
     void getFavorites_success() {
-        Set<Product> favorites = Set.of(new Product());
-        when(favoriteRepository.findFavoritesByUserId(1L)).thenReturn(favorites);
+        Product p = new Product();
+        p.setId(1L);
+        p.setName("n");
+        p.setBrand("b");
+        p.setCategory("c");
+        p.setSalePrice(1.0);
+        Set<Product> favorites = new HashSet<>(Set.of(p));
+        User user = new User();
+        user.setFavorites(favorites);
+        when(userRepository.findByIdWithFavorites(1L)).thenReturn(Optional.of(user));
         assertSame(favorites, favoriteService.getFavorites(1L));
     }
 

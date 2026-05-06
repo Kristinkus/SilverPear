@@ -19,7 +19,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -264,7 +267,22 @@ public class SecurityDataInitializer implements ApplicationRunner {
      * В старых схемах gender мог быть ENUM/CHAR(1) — тогда строки FEMALE, UNISEX дают "Data truncated".
      * Hibernate с {@link com.example.silverpear.enums.Gender} ожидает хранение имён enum как строка.
      */
+    /**
+     * MySQL/MariaDB only — H2 (tests) and others do not support {@code MODIFY COLUMN}.
+     */
+    private boolean isMysqlLike() {
+        try (Connection c = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
+            String name = c.getMetaData().getDatabaseProductName();
+            return "MySQL".equalsIgnoreCase(name) || name.toLowerCase().contains("mariadb");
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
     private void widenProductGenderColumnForEnumStrings() {
+        if (!isMysqlLike()) {
+            return;
+        }
         jdbcTemplate.execute("ALTER TABLE products MODIFY COLUMN gender VARCHAR(32) NULL");
     }
 
@@ -272,6 +290,9 @@ public class SecurityDataInitializer implements ApplicationRunner {
      * Старые схемы с VARCHAR для описания не вмещают длинные тексты (NEYDO и др.); Hibernate ddl-auto не всегда меняет тип.
      */
     private void widenProductDescriptionColumn() {
+        if (!isMysqlLike()) {
+            return;
+        }
         jdbcTemplate.execute("ALTER TABLE products MODIFY COLUMN description LONGTEXT NULL");
     }
 
@@ -322,12 +343,15 @@ public class SecurityDataInitializer implements ApplicationRunner {
      * Чистим «висячие» связи, чтобы избранное/аккаунт открывались без ошибок.
      */
     private void cleanupDanglingFavoriteLinks() {
-        jdbcTemplate.update("""
-                DELETE uf
-                FROM user_favorites uf
-                LEFT JOIN products p ON p.id = uf.product_id
-                WHERE p.id IS NULL
-                """);
+        try {
+            jdbcTemplate.update("""
+                    DELETE FROM user_favorites
+                    WHERE product_id IS NULL
+                       OR NOT EXISTS (SELECT 1 FROM products p WHERE p.id = user_favorites.product_id)
+                    """);
+        } catch (Exception ignored) {
+            // H2/CI: таблица может отсутствовать или иметь другое имя до полного DDL — не мешаем старту.
+        }
     }
 
     private User buildUser(String login, String password, String name, String surname,

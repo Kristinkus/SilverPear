@@ -71,7 +71,8 @@ class OrderServiceTest {
         Order actual = orderService.createOrderWithTransaction(10L, request);
 
         assertSame(user, actual.getUser());
-        assertEquals(50.0, actual.getTotalAmount(), 0.001);
+        // Ниже порога бесплатной доставки (55) добавляется DELIVERY_FEE (7): 50 + 7
+        assertEquals(57.0, actual.getTotalAmount(), 0.001);
         verify(orderRepository).save(any(Order.class));
     }
 
@@ -93,16 +94,12 @@ class OrderServiceTest {
     }
 
     @Test
-    void findAllOrdersWithItemsAndProducts_cachedAndRepository() {
-        List<Order> cached = List.of(new Order());
-        when(cacheService.get(any())).thenReturn(cached);
-        assertSame(cached, orderService.findAllOrdersWithItemsAndProducts());
-
+    void findAllOrdersWithItemsAndProducts_alwaysFromRepository() {
         List<Order> repo = List.of(new Order(), new Order());
-        when(cacheService.get(any())).thenReturn(null);
         when(orderRepository.findAllOrdersWithItemsAndProducts()).thenReturn(repo);
         assertSame(repo, orderService.findAllOrdersWithItemsAndProducts());
-        verify(cacheService).put(any(), eq(repo));
+        verify(cacheService, never()).get(any());
+        verify(cacheService, never()).put(any(), any());
     }
 
     @Test
@@ -153,7 +150,7 @@ class OrderServiceTest {
         OrderRequest request = new OrderRequest();
         request.setProductQuantities(Map.of("5", 2));
         Order updated = orderService.updateOrder(11L, request);
-        assertEquals(20.0, updated.getTotalAmount());
+        assertEquals(27.0, updated.getTotalAmount());
         verify(cacheService).put(any(), eq(updated));
 
         when(cacheService.get(any())).thenReturn(null);
@@ -174,7 +171,7 @@ class OrderServiceTest {
     void updateOrderStatus_success() {
         Order order = new Order();
         order.setStatus(OrderStatus.NEW);
-        when(cacheService.get(any())).thenReturn(order);
+        when(orderRepository.findByIdWithUserAndItemsAndProducts(1L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);
         Order updated = orderService.updateOrderStatus(1L, OrderStatus.CANCELLED);
         assertEquals(OrderStatus.CANCELLED, updated.getStatus());
