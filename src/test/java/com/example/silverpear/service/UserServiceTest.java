@@ -38,12 +38,15 @@ class UserServiceTest {
     private UserWithOrdersMapper userWithOrdersMapper;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private OrderService orderService;
 
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, userMapper, userWithOrdersMapper, passwordEncoder);
+        userService = new UserService(
+                userRepository, userMapper, userWithOrdersMapper, passwordEncoder, orderService);
         lenient().when(passwordEncoder.encode(any())).thenAnswer(invocation -> {
             Object raw = invocation.getArgument(0);
             return "enc_" + raw;

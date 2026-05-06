@@ -1,6 +1,7 @@
 package com.example.silverpear.service;
 
 import com.example.silverpear.product.entity.Perfume;
+import com.example.silverpear.repository.FavoriteRepository;
 import com.example.silverpear.repository.PerfumeRepository;
 import com.example.silverpear.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,13 +27,16 @@ class PerfumeServiceTest {
     @Mock
     private PerfumeRepository perfumeRepository;
     @Mock
+    private FavoriteRepository favoriteRepository;
+    @Mock
     private CacheService cacheService;
 
     private PerfumeService perfumeService;
 
     @BeforeEach
     void setUp() {
-        perfumeService = new PerfumeService(productRepository, perfumeRepository, cacheService);
+        perfumeService = new PerfumeService(
+                productRepository, perfumeRepository, favoriteRepository, cacheService);
     }
 
     @Test

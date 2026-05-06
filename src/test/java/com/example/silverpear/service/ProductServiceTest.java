@@ -3,6 +3,7 @@ package com.example.silverpear.service;
 import com.example.silverpear.cache.CacheKey;
 import com.example.silverpear.enums.Gender;
 import com.example.silverpear.product.entity.Product;
+import com.example.silverpear.repository.FavoriteRepository;
 import com.example.silverpear.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,13 +37,15 @@ class ProductServiceTest {
     @Mock
     private ProductRepository productRepository;
     @Mock
+    private FavoriteRepository favoriteRepository;
+    @Mock
     private CacheService cacheService;
 
     private ProductService productService;
 
     @BeforeEach
     void setUp() {
-        productService = new ProductService(productRepository, cacheService);
+        productService = new ProductService(productRepository, favoriteRepository, cacheService);
     }
 
     @Test
