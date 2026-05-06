@@ -3,6 +3,9 @@
 # 2) docker-publish — после успешных тестов: сборка образа и push в GHCR (артефакт «развёртывания»)
 # 3) stack-smoke   — подъём app+MySQL через Docker Compose на раннере и GET /actuator/health (healthcheck без хостинга)
 # 4) healthcheck-remote — опционально: проверка уже выставленного в интернет приложения (Settings → Variables → PUBLIC_APP_URL)
+#
+# SonarCloud: по умолчанию шаг выключен. Включите в Settings → Variables → Actions: RUN_SONAR = true
+# и задайте секрет SONAR_TOKEN (иначе шаг упадёт).
 
 name: CI/CD
 
@@ -53,8 +56,9 @@ jobs:
       - name: Maven — verify (тесты и пакет)
         run: mvn -B -Pcheckstyle-skip clean verify
 
-      - name: SonarCloud (если задан SONAR_TOKEN)
-        if: ${{ secrets.SONAR_TOKEN != '' }}
+      # В if: нельзя использовать secrets — только vars / github / env (иначе Invalid workflow file).
+      - name: SonarCloud (включите переменной RUN_SONAR)
+        if: vars.RUN_SONAR == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -66,6 +70,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Имя образа для GHCR (только нижний регистр)
+        id: ghcr
+        run: echo "image=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
       - name: Вход в GitHub Container Registry
         if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
@@ -79,7 +87,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ${{ steps.ghcr.outputs.image }}
           tags: |
             type=sha,format=long,prefix=
             type=raw,value=latest,enable=${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
