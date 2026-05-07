@@ -134,10 +134,12 @@ jobs:
 
       - name: .env для Compose
         run: |
+          DB_PASSWORD="$(openssl rand -hex 24)"
+          JWT_SECRET="$(openssl rand -base64 48 | tr -d '\n' | tr '/+' 'AB')"
           printf '%s\n' \
             'DB_USERNAME=root' \
-            'DB_PASSWORD=ci_silverpear_mysql' \
-            'JWT_SECRET=CiJwtSecretMustBeLongEnoughForHS256AlgorithmTestOnly!!' \
+            "DB_PASSWORD=${DB_PASSWORD}" \
+            "JWT_SECRET=${JWT_SECRET}" \
             > .env
 
       - name: Docker Compose — подъём и /actuator/health
